@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Face Detection</title>
+    <!-- Load OpenCV.js dari CDN -->
+    <script
+      async
+      src="https://docs.opencv.org/4.x/opencv.js"
+      onload="onOpenCvReady()"
+    ></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden; /* Hilangkan scroll */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f2f5; /* Latar lebih modern */
+        font-family: Arial, sans-serif;
+      }
+
+      #container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        padding: 16px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      #status {
+        font-weight: bold;
+        margin-bottom: 12px;
+        font-size: 16px;
+        color: #333;
+      }
+
+      video {
+        width: 360px;
+        height: 270px;
+        border-radius: 12px;
+        border: 2px solid #00bfff; /* border aqua */
+        object-fit: cover; /* agar video full di area */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        margin-top: 12px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        background-color: #00bfff;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      button:hover {
+        background-color: #0099cc;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="status">Loading OpenCV.js...</div>
+      <video id="video" autoplay></video>
+    </div>
+
+    <script>
+      let cvReady = false;
+
+      function onOpenCvReady() {
+        cvReady = true;
+        document.getElementById("status").innerText = "✅ OpenCV.js siap!";
+        console.log("OpenCV.js siap!");
+      }
+
+      const video = document.getElementById("video");
+
+      // Ambil video dari webcam
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => (video.srcObject = stream))
+        .catch((err) => {
+          console.error("Error accessing webcam:", err);
+          document.getElementById("status").innerText =
+            "⚠️ Tidak bisa mengakses kamera!";
+        });
+
+      // Event dari Flutter
+      window.addEventListener("message", async (event) => {
+        if (!cvReady) {
+          console.log("OpenCV belum siap, tunggu...");
+          return;
+        }
+
+        if (event.data.type === "detectFace") {
+          const faceDetected = await detectFaceFromVideo();
+          window.parent.postMessage(
+            { type: "faceDetection", faceDetected },
+            "*"
+          );
+        } else if (event.data.type === "takePhoto") {
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext("2d").drawImage(video, 0, 0);
+          const dataUrl = canvas.toDataURL("image/png");
+          window.parent.postMessage({ type: "capture", dataUrl }, "*");
+        }
+      });
+
+      async function detectFaceFromVideo() {
+        if (!cvReady) return false;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0);
+
+        let src = cv.imread(canvas);
+        let gray = new cv.Mat();
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+        let faceCascade = new cv.CascadeClassifier();
+        await new Promise((resolve, reject) => {
+          let xhr = new XMLHttpRequest();
+          xhr.open(
+            "GET",
+            "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml",
+            true
+          );
+          xhr.responseType = "arraybuffer";
+          xhr.onload = function () {
+            if (xhr.status === 200) {
+              let data = new Uint8Array(xhr.response);
+              cv.FS_createDataFile(
+                "/",
+                "haarcascade_frontalface_default.xml",
+                data,
+                true,
+                false,
+                false
+              );
+              faceCascade.load("haarcascade_frontalface_default.xml");
+              resolve();
+            } else reject("Failed to load cascade");
+          };
+          xhr.send();
+        });
+
+        let faces = new cv.RectVector();
+        faceCascade.detectMultiScale(gray, faces, 1.1, 3, 0);
+
+        src.delete();
+        gray.delete();
+        faceCascade.delete();
+
+        console.log(`Wajah terdeteksi: ${faces.size()}`);
+        return faces.size() > 0;
+      }
+    </script>
+  </body>
+</html>
