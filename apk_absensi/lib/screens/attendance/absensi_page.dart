@@ -4,6 +4,9 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import 'package:apk_absensi/config/api.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class DailyLog {
   String date;
@@ -12,10 +15,6 @@ class DailyLog {
   Uint8List? photoBytes;
 
   DailyLog({required this.date, this.checkIn, this.checkOut, this.photoBytes});
-}
-
-class ApiConfig {
-  static const String baseUrl = "http://192.168.1.33:8000/api";
 }
 
 class AbsensiPage extends StatefulWidget {
@@ -48,39 +47,45 @@ class _AbsensiPageState extends State<AbsensiPage> {
     super.dispose();
   }
 
-  // ================== HANDLE MESSAGES FROM IFRAME ==================
   void _handleMessage(html.MessageEvent event) async {
     if (!mounted) return;
 
-    if (event.data != null && event.data is Map) {
-      final data = Map<String, dynamic>.from(event.data);
+    try {
+      if (event.data != null && event.data is Map) {
+        final data = Map<String, dynamic>.from(event.data);
 
-      if (data['type'] == 'capture' && data['dataUrl'] != null) {
-        final dataUrl = data['dataUrl'] as String;
-        final bytes = base64Decode(dataUrl.split(',')[1]);
+        if (data['type'] == 'capture' && data['dataUrl'] != null) {
+          final dataUrl = data['dataUrl'] as String;
+          final bytes = base64Decode(dataUrl.split(',')[1]);
 
-        setState(() {
-          _getTodayLog().photoBytes = bytes;
-        });
+          setState(() {
+            _getTodayLog().photoBytes = bytes;
+          });
 
-        await _uploadAttendance(dataUrl, isCheckIn: _isCheckIn);
-      } else if (data['type'] == 'faceDetection' &&
-          data['faceDetected'] != null) {
-        bool faceDetected = data['faceDetected'] as bool;
-        if (faceDetected) {
-          final element = html.document.querySelector('iframe');
-          if (element is html.IFrameElement) {
-            element.contentWindow?.postMessage({'type': 'takePhoto'}, '*');
+          await _uploadAttendance(dataUrl, isCheckIn: _isCheckIn);
+        } else if (data['type'] == 'faceDetection' &&
+            data['faceDetected'] != null) {
+          bool faceDetected = data['faceDetected'] as bool;
+          if (faceDetected) {
+            final element = html.document.querySelector('iframe');
+            if (element is html.IFrameElement) {
+              element.contentWindow?.postMessage({'type': 'takePhoto'}, '*');
+            }
+          } else {
+            setState(() => _isProcessing = false);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Wajah tidak terdeteksi. Ambil foto gagal!'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
           }
-        } else {
-          setState(() => _isProcessing = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Wajah tidak terdeteksi. Ambil foto gagal!'),
-            ),
-          );
         }
       }
+    } catch (e) {
+      setState(() => _isProcessing = false);
     }
   }
 
@@ -118,35 +123,28 @@ class _AbsensiPageState extends State<AbsensiPage> {
   // ================== GET LOCATION ==================
   Future<Map<String, double>> _getCurrentLocation() async {
     try {
-      final completer = Completer<Map<String, double>>();
+      // Attempt to get current position; browsers that don't support geolocation
+      // will throw and be handled by the catch block.
+      final position = await html.window.navigator.geolocation
+          .getCurrentPosition(enableHighAccuracy: true);
 
-      if (html.window.navigator.geolocation != null) {
-        html.window.navigator.geolocation!
-            .getCurrentPosition(enableHighAccuracy: true)
-            .then((position) {
-              // pastikan coords tidak null
-              final coords = position.coords;
-              final lat = coords?.latitude ?? 0.0;
-              final lng = coords?.longitude ?? 0.0;
-
-              completer.complete({
-                'lat': lat.toDouble(),
-                'lng': lng.toDouble(),
-              });
-            })
-            .catchError((e) {
-              print('Error ambil lokasi: $e');
-              completer.complete({'lat': 0.0, 'lng': 0.0});
-            });
-      } else {
-        print('Geolocation tidak tersedia di browser ini');
-        completer.complete({'lat': 0.0, 'lng': 0.0});
+      // Handle null safety untuk coords
+      final coords = position.coords;
+      if (coords == null) {
+        print('Koordinat tidak tersedia');
+        return {'lat': -6.9173248, 'lng': 107.6461568};
       }
 
-      return completer.future;
+      // Akses latitude dan longitude dengan null safety
+      final lat = (coords.latitude ?? -6.9173248).toDouble();
+      final lng = (coords.longitude ?? 107.6461568).toDouble();
+
+      print('Lokasi berhasil didapat: lat=$lat, lng=$lng');
+      return {'lat': lat, 'lng': lng};
     } catch (e) {
-      print('Error exception ambil lokasi: $e');
-      return {'lat': 0.0, 'lng': 0.0};
+      print('Error geolocation: $e');
+      // Return default location (Kantor)
+      return {'lat': -6.9173248, 'lng': 107.6461568};
     }
   }
 
@@ -155,82 +153,104 @@ class _AbsensiPageState extends State<AbsensiPage> {
     String dataUrl, {
     required bool isCheckIn,
   }) async {
+    if (!mounted) return;
     setState(() => _isProcessing = true);
 
     try {
+      // Ambil lokasi
       final location = await _getCurrentLocation();
-      final lat = location?['lat'] ?? 0.0;
-      final lng = location?['lng'] ?? 0.0;
 
-      final blob = html.Blob([
-        base64Decode(dataUrl.split(',')[1]),
-      ], 'image/png');
-      final formData = html.FormData();
-      formData.appendBlob('photo', blob, 'attendance.png');
+      final url = Uri.parse(
+        isCheckIn
+            ? '${ApiConfig.baseUrl}/attendance/checkin'
+            : '${ApiConfig.baseUrl}/attendance/checkout',
+      );
 
-      // Gunakan lokasi yang sebenarnya
-      formData.append('lat', lat.toString());
-      formData.append('lng', lng.toString());
+      // Extract base64
+      final base64String = dataUrl.split(',').last;
+      final bytes = base64Decode(base64String);
 
-      final url = isCheckIn
-          ? '${ApiConfig.baseUrl}/attendance/checkin'
-          : '${ApiConfig.baseUrl}/attendance/checkout';
+      // ===== FIX: WAJIB pakai MultipartRequest untuk WEB =====
+      final request = http.MultipartRequest("POST", url);
 
-      print('Mengirim request ke: $url dengan lat=$lat, lng=$lng');
+      request.headers.addAll({
+        "Authorization": "Bearer ${widget.token}",
+        "Accept": "application/json",
+      });
 
-      final request = html.HttpRequest();
-      request
-        ..open('POST', url)
-        ..setRequestHeader('Authorization', 'Bearer ${widget.token}')
-        ..onLoad.listen((event) {
-          if (!mounted) return;
-          setState(() => _isProcessing = false);
+      // FILE
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'photo',
+          bytes,
+          filename: "attendance.jpg",
+          contentType: MediaType("image", "jpeg"),
+        ),
+      );
 
-          print('Status: ${request.status}');
-          print('Response: ${request.responseText}');
+      // Fields
+      request.fields['lat'] = location['lat'].toString();
+      request.fields['lng'] = location['lng'].toString();
 
-          if (request.status == 200) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  isCheckIn ? 'Check-In berhasil!' : 'Check-Out berhasil!',
-                ),
-              ),
-            );
-            setState(() {
-              if (isCheckIn) {
-                _getTodayLog().checkIn = TimeOfDay.now().format(context);
-              } else {
-                _getTodayLog().checkOut = TimeOfDay.now().format(context);
-              }
-            });
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Absensi gagal: ${request.responseText}')),
-            );
-          }
-        })
-        ..onError.listen((event) {
-          if (!mounted) return;
-          setState(() => _isProcessing = false);
-          print('Request error: $event');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Terjadi kesalahan saat upload!')),
-          );
-        })
-        ..send(formData);
+      // Kirim request
+      final responseStream = await request.send();
+      final responseBody = await responseStream.stream.bytesToString();
+
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+
+      // Cek hasil
+      if (responseStream.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isCheckIn ? 'Check-In berhasil!' : 'Check-Out berhasil!',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Update DailyLog
+        final today = _getTodayLog();
+        final now = DateFormat('HH:mm:ss').format(DateTime.now());
+        if (isCheckIn) {
+          today.checkIn = now;
+        } else {
+          today.checkOut = now;
+        }
+
+        if (today.photoBytes == null) {
+          today.photoBytes = bytes;
+        }
+
+        setState(() {});
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Upload gagal: $responseBody"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isProcessing = false);
-      print('Error exception: $e');
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error upload: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Cek jika token kosong
+    if (widget.token.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: AppBar(title: Text('Absensi - ${widget.userName}')),
       body: SingleChildScrollView(
@@ -244,22 +264,25 @@ class _AbsensiPageState extends State<AbsensiPage> {
             ),
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton.icon(
-                  onPressed: _isProcessing
-                      ? null
-                      : () => captureImage(isCheckIn: true),
-                  icon: const Icon(Icons.login),
-                  label: Text(_isProcessing ? 'Memproses...' : 'Masuk'),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing
+                        ? null
+                        : () => captureImage(isCheckIn: true),
+                    icon: const Icon(Icons.login),
+                    label: Text(_isProcessing ? 'Memproses...' : 'Masuk'),
+                  ),
                 ),
-                const SizedBox(width: 16),
-                ElevatedButton.icon(
-                  onPressed: _isProcessing
-                      ? null
-                      : () => captureImage(isCheckIn: false),
-                  icon: const Icon(Icons.logout),
-                  label: Text(_isProcessing ? 'Memproses...' : 'Keluar'),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing
+                        ? null
+                        : () => captureImage(isCheckIn: false),
+                    icon: const Icon(Icons.logout),
+                    label: Text(_isProcessing ? 'Memproses...' : 'Keluar'),
+                  ),
                 ),
               ],
             ),

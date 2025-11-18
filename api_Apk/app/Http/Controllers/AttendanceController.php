@@ -10,6 +10,13 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    protected function photoUrl($path)
+    {
+        if (!$path)
+            return null;
+        return Storage::url($path); // otomatis memberi /storage/xxx
+    }
+
     // Check-in
     public function checkIn(Request $r)
     {
@@ -49,7 +56,19 @@ class AttendanceController extends Controller
         // compute late & penalty
         $this->computeLateAndPenalty($att);
 
-        return response()->json(['message' => 'Check-in berhasil', 'attendance' => $att]);
+        return response()->json([
+            'message' => 'Check-in berhasil',
+            'attendance' => [
+                'id' => $att->id,
+                'date' => $att->date,
+                'check_in_time' => $att->check_in_time,
+                'check_in_photo' => $this->photoUrl($att->check_in_photo),
+                'status' => $att->status,
+                'late_minutes' => $att->late_minutes,
+                'late_penalty' => $att->late_penalty,
+                'location_verified' => $att->location_verified,
+            ]
+        ]);
     }
 
     // Check-out
@@ -90,7 +109,21 @@ class AttendanceController extends Controller
         // compute overtime if needed (placeholder)
         // $this->computeOvertime($att);
 
-        return response()->json(['message' => 'Check-out berhasil', 'attendance' => $att]);
+        return response()->json([
+            'message' => 'Check-out berhasil',
+            'attendance' => [
+                'id' => $att->id,
+                'date' => $att->date,
+                'check_in_time' => $att->check_in_time,
+                'check_out_time' => $att->check_out_time,
+                'check_in_photo' => $this->photoUrl($att->check_in_photo),
+                'check_out_photo' => $this->photoUrl($att->check_out_photo),
+                'status' => $att->status,
+                'late_minutes' => $att->late_minutes,
+                'late_penalty' => $att->late_penalty,
+                'location_verified' => $att->location_verified,
+            ]
+        ]);
     }
 
     // History for current user
@@ -98,12 +131,26 @@ class AttendanceController extends Controller
     {
         $user = $r->user();
         $from = $r->query('from', now()->subMonth()->toDateString());
-        $to   = $r->query('to', now()->toDateString());
+        $to = $r->query('to', now()->toDateString());
 
         $records = Attendance::where('user_id', $user->id)
             ->whereBetween('date', [$from, $to])
             ->orderBy('date', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($att) {
+                return [
+                    'id' => $att->id,
+                    'date' => $att->date,
+                    'check_in_time' => $att->check_in_time,
+                    'check_out_time' => $att->check_out_time,
+                    'status' => $att->status,
+                    'late_minutes' => $att->late_minutes,
+                    'late_penalty' => $att->late_penalty,
+                    'location_verified' => $att->location_verified,
+                    'check_in_photo' => $this->photoUrl($att->check_in_photo),
+                    'check_out_photo' => $this->photoUrl($att->check_out_photo),
+                ];
+            });
 
         return response()->json(['data' => $records]);
     }
@@ -112,7 +159,8 @@ class AttendanceController extends Controller
 
     protected function verifyLocation($lat, $lng, $user): bool
     {
-        if (!$lat || !$lng) return false;
+        if (!$lat || !$lng)
+            return false;
         $setting = DivisionSetting::where('division_id', $user->division_id)->first();
         if (!$setting || !$setting->office_lat || !$setting->office_lng) {
             // jika tidak ada setting lokasi, boleh set ke true atau false sesuai kebijakan
@@ -120,7 +168,7 @@ class AttendanceController extends Controller
         }
 
         $distance = $this->haversineMeters($lat, $lng, $setting->office_lat, $setting->office_lng);
-        return ($distance <= (float)$setting->radius_meters);
+        return ($distance <= (float) $setting->radius_meters);
     }
 
     // Haversine formula -> returns meters
@@ -136,8 +184,8 @@ class AttendanceController extends Controller
         $lonDelta = $lonTo - $lonFrom;
 
         $a = sin($latDelta / 2) * sin($latDelta / 2) +
-             cos($latFrom) * cos($latTo) *
-             sin($lonDelta / 2) * sin($lonDelta / 2);
+            cos($latFrom) * cos($latTo) *
+            sin($lonDelta / 2) * sin($lonDelta / 2);
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
@@ -147,12 +195,14 @@ class AttendanceController extends Controller
     protected function computeLateAndPenalty(Attendance $att)
     {
         // pastikan ada check_in_time
-        if (!$att->check_in_time) return;
+        if (!$att->check_in_time)
+            return;
 
         $setting = DivisionSetting::where('division_id', $att->division_id)->first();
-        if (!$setting || !$setting->work_start) return;
+        if (!$setting || !$setting->work_start)
+            return;
 
-        $workStart = Carbon::createFromFormat('H:i:s', $setting->work_start->format('H:i:s'));
+        $workStart = Carbon::createFromFormat('H:i:s', $setting->work_start);
         $checkIn = Carbon::createFromTimeString($att->check_in_time);
 
         $diff = $checkIn->diffInMinutes($workStart, false); // negative if earlier
@@ -161,9 +211,9 @@ class AttendanceController extends Controller
             $late = $diff - $setting->grace_minutes;
         }
 
-        $penalty = $late * (float)$setting->penalty_per_minute;
+        $penalty = $late * (float) $setting->penalty_per_minute;
 
-        $att->late_minutes = (int)$late;
+        $att->late_minutes = (int) $late;
         $att->late_penalty = $penalty;
         $att->save();
     }

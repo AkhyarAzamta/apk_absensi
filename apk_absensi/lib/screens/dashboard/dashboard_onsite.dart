@@ -60,7 +60,6 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
 
       return json.decode(response.body);
     } catch (e) {
-      print("Error load division settings: $e");
       return null;
     }
   }

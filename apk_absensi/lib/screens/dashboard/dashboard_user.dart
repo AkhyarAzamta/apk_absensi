@@ -3,8 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/dashboard_template.dart';
 import '../attendance/absensi_list_page.dart';
 import '../attendance/absensi_page.dart';
-import '../attendance/absensi_check_in_page.dart';
-import '../attendance/absensi_check_out_page.dart';
 
 class DashboardUser extends StatefulWidget {
   @override
@@ -14,7 +12,6 @@ class DashboardUser extends StatefulWidget {
 class _DashboardUserState extends State<DashboardUser> {
   List<Map<String, dynamic>> menu = [
     {"title": "Absensi", "icon": Icons.camera_alt},
-    // {"title": "Absen Pulang", "icon": Icons.exit_to_app},
     {"title": "Ajukan Cuti", "icon": Icons.beach_access},
     {"title": "Ajukan Lembur", "icon": Icons.timer},
     {"title": "Riwayat Absensi", "icon": Icons.history},
@@ -23,6 +20,7 @@ class _DashboardUserState extends State<DashboardUser> {
 
   String? Name = "";
   String? userEmail = "";
+  String? userToken = "";
 
   @override
   void initState() {
@@ -36,7 +34,18 @@ class _DashboardUserState extends State<DashboardUser> {
     setState(() {
       Name = prefs.getString("user_name") ?? "Karyawan";
       userEmail = prefs.getString("user_email") ?? "email@example.com";
+      userToken = prefs.getString("token") ?? ""; // ✅ PERBAIKAN: gunakan "token" bukan "token"
     });
+    
+    // Debug info
+    print('User: $Name');
+    print('Email: $userEmail');
+    print('Token: ${userToken?.substring(0, 20)}...');
+    print('Token length: ${userToken?.length}');
+    
+    // Check semua keys yang ada di SharedPreferences
+    final allKeys = prefs.getKeys();
+    print('All SharedPreferences keys: $allKeys');
   }
 
   Future<void> handleMenuClick(String title) async {
@@ -45,25 +54,38 @@ class _DashboardUserState extends State<DashboardUser> {
         context,
         MaterialPageRoute(builder: (_) => AbsensiListPage()),
       );
-    } else if (title == "Absensi" || title == "Absen Pulang") {
-      // Ambil token dari SharedPreferences
+    } else if (title == "Absensi") {
+      // Reload token untuk memastikan data terbaru
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String loggedInUserName = prefs.getString("user_name") ?? "Rifani";
-      String loggedInUserToken = prefs.getString("user_token") ?? "";
+      String? currentToken = prefs.getString("token");
+      
+      if (currentToken == null || currentToken.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Token tidak ditemukan, silakan login kembali'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
 
+      print('Membuka absensi dengan token: ${currentToken.substring(0, 20)}...');
+      
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => AbsensiPage(
-            userName: loggedInUserName,
-            token: loggedInUserToken, // ✅ sekarang sudah ada
+            userName: Name ?? "Karyawan",
+            token: currentToken,
           ),
         ),
       );
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Menu $title diklik")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Menu $title diklik"))
+      );
     }
   }
 
