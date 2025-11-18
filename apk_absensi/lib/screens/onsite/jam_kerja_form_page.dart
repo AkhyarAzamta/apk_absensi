@@ -90,9 +90,6 @@ class _JamKerjaFormPageState extends State<JamKerjaFormPage> {
       );
     }
 
-    print("STATUS: ${response.statusCode}");
-    print("BODY: ${response.body}");
-
     if (response.statusCode == 200 || response.statusCode == 201) {
       Navigator.pop(context, true);
       ScaffoldMessenger.of(

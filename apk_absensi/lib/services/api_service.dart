@@ -1,14 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api.dart'; // <- pakai ApiConfig
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static final String baseUrl = ApiConfig.baseUrl;
 
   // GET attendance list
   static Future<List<dynamic>> getAttendance() async {
-    final url = Uri.parse("$baseUrl/attendance");
-    final response = await http.get(url);
+    final url = Uri.parse("$baseUrl/attendance/history");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    
+    final response = await http.get(
+      url,
+      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+    );
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);

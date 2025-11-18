@@ -28,7 +28,6 @@ class _WebCameraPageState extends State<WebCameraPage> {
       globalVideoElement.srcObject = stream;
       globalVideoElement.play();
     } catch (e) {
-      print("Kamera error: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Gagal akses kamera: $e")));

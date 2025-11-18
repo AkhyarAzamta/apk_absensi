@@ -111,14 +111,14 @@ class _UserAddPageState extends State<UserAddPage> {
       base64Image = base64Encode(bytes);
     }
 
-    print({
-      "name": name.text,
-      "email": email.text,
-      "password": password.text,
-      "role_id": selectedRole.toString(),
-      "division_id": selectedRole == 1 ? selectedDivision?.toString() : null,
-      "photo": base64Image?.substring(0, 30), // preview 30 karakter saja
-    });
+    // print({
+    //   "name": name.text,
+    //   "email": email.text,
+    //   "password": password.text,
+    //   "role_id": selectedRole.toString(),
+    //   "division_id": selectedRole == 1 ? selectedDivision?.toString() : null,
+    //   "photo": base64Image?.substring(0, 30), // preview 30 karakter saja
+    // });
 
     final response = await http.post(
       uri,

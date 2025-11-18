@@ -15,56 +15,109 @@ class _LoginPageState extends State<LoginPage> {
   bool loading = false;
 
   Future<void> login() async {
+    if (emailC.text.isEmpty || passC.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan password harus diisi')),
+      );
+      return;
+    }
+
     setState(() => loading = true);
 
-    final url = Uri.parse("${ApiConfig.baseUrl}/login");
+    try {
+      final url = Uri.parse("${ApiConfig.baseUrl}/login");
 
-    final response = await http.post(
-      url,
-      body: {"email": emailC.text.trim(), "password": passC.text.trim()},
-    );
+      print('Mengirim login request ke: $url');
+      print('Email: ${emailC.text.trim()}');
 
-    setState(() => loading = false);
+      final response = await http.post(
+        url,
+        body: {
+          "email": emailC.text.trim(), 
+          "password": passC.text.trim()
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final user = data["user"];
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() => loading = false);
 
-      await prefs.setString("token", data["token"]);
-      await prefs.setInt("role_id", user["role_id"]);
-      await prefs.setInt("division_id", user["division_id"] ?? 0);
-      await prefs.setInt("user_id", user["id"]);
-      await prefs.setString("user_name", user["name"]);
-      await prefs.setString("user_email", user["email"]);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final user = data["user"];
 
-      int roleId = user["role_id"];
-      int divId = user["division_id"] ?? 0;
+        // Debug: print structure of response
+        print('Data keys: ${data.keys}');
+        print('User keys: ${user.keys}');
 
-      if (roleId == 1) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
 
-        if (divId == 1) {
-          Navigator.pushReplacementNamed(context, "/dashboard_finance");
-        } else if (divId == 2) {
-          Navigator.pushReplacementNamed(context, "/dashboard_apo");
-        } else if (divId == 3) {
-          Navigator.pushReplacementNamed(context, "/dashboard_frontdesk");
-        } else if (divId == 4) {
-          Navigator.pushReplacementNamed(context, "/dashboard_onsite");
+        // ✅ PERBAIKAN: Gunakan "token" bukan "token"
+        String? token = data["token"];
+        if (token == null) {
+          // Coba alternatif key names
+          token = data["access_token"] ?? data["auth_token"] ?? data["token"];
         }
-      } else if (roleId == 2) {
 
-        Navigator.pushReplacementNamed(context, "/dashboard_user");
+        if (token == null) {
+          throw Exception('Token tidak ditemukan dalam response');
+        }
+
+        print('Token yang disimpan: ${token.substring(0, 20)}...');
+
+        await prefs.setString("token", token); // ✅ Key yang benar
+        await prefs.setInt("role_id", user["role_id"]);
+        await prefs.setInt("division_id", user["division_id"] ?? 0);
+        await prefs.setInt("user_id", user["id"]);
+        await prefs.setString("user_name", user["name"]);
+        await prefs.setString("user_email", user["email"]);
+
+        int roleId = user["role_id"];
+        int divId = user["division_id"] ?? 0;
+
+        print('Login berhasil - Role: $roleId, Division: $divId');
+
+        if (roleId == 1) {
+          if (divId == 1) {
+            Navigator.pushReplacementNamed(context, "/dashboard_finance");
+          } else if (divId == 2) {
+            Navigator.pushReplacementNamed(context, "/dashboard_apo");
+          } else if (divId == 3) {
+            Navigator.pushReplacementNamed(context, "/dashboard_frontdesk");
+          } else if (divId == 4) {
+            Navigator.pushReplacementNamed(context, "/dashboard_onsite");
+          } else {
+            // Default untuk admin tanpa division spesifik
+            Navigator.pushReplacementNamed(context, "/dashboard_user");
+          }
+        } else if (roleId == 2) {
+          Navigator.pushReplacementNamed(context, "/dashboard_user");
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Role tidak dikenali!")),
+          );
+        }
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Role tidak dikenali!")));
+        final errorData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorData["message"] ?? "Email atau password salah!"
+            ),
+          ),
+        );
       }
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Email atau password salah!")));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => loading = false);
+      print('Error during login: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+        ),
+      );
     }
   }
 
@@ -72,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Absensi Karyawan"),
+        title: const Text("Absensi Karyawan"),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
       ),
@@ -85,19 +138,19 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Center(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.account_circle,
                     size: 100,
                     color: Colors.blueAccent,
                   ),
-                  SizedBox(height: 20),
-                  Text(
+                  const SizedBox(height: 20),
+                  const Text(
                     "Login",
                     style: TextStyle(
                       fontSize: 32,
@@ -105,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
                       color: Colors.blueAccent,
                     ),
                   ),
-                  SizedBox(height: 30),
+                  const SizedBox(height: 30),
                   TextField(
                     controller: emailC,
                     decoration: InputDecoration(
@@ -118,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
                       fillColor: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: passC,
                     obscureText: true,
@@ -132,13 +185,13 @@ class _LoginPageState extends State<LoginPage> {
                       fillColor: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 30),
+                  const SizedBox(height: 30),
                   loading
-                      ? CircularProgressIndicator()
+                      ? const CircularProgressIndicator()
                       : ElevatedButton(
                           onPressed: login,
                           style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 50,
                               vertical: 15,
                             ),
@@ -147,21 +200,21 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             backgroundColor: Colors.blueAccent,
                           ),
-                          child: Text(
+                          child: const Text(
                             "Login",
                             style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                         ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text("Fitur lupa password belum tersedia"),
                         ),
                       );
                     },
-                    child: Text(
+                    child: const Text(
                       "Lupa Password?",
                       style: TextStyle(color: Colors.blueAccent),
                     ),

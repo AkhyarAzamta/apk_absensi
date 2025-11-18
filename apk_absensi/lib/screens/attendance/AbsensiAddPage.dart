@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; // <-- tambahkan!
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api.dart';
 
@@ -14,24 +15,22 @@ class AbsensiAddPage extends StatefulWidget {
 }
 
 class _AbsensiAddPageState extends State<AbsensiAddPage> {
-  File? _imageFile;
-  XFile? _webImageFile;
-  String? _webImageDataUrl;
+  File? _imageFile;          // Mobile
+  XFile? _webImageFile;      // Web
   bool loading = false;
 
   Future<void> pickImage({required bool fromCamera}) async {
     final picker = ImagePicker();
+
     if (kIsWeb) {
-      if (!fromCamera) {
-        final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-        if (pickedFile != null) {
-          setState(() {
-            _webImageFile = pickedFile;
-            _webImageDataUrl = null;
-          });
-        }
-      } else {
-        // implement Web camera
+      final pickedFile = await picker.pickImage(
+        source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _webImageFile = pickedFile;
+        });
       }
     } else {
       final pickedFile = await picker.pickImage(
@@ -53,43 +52,42 @@ class _AbsensiAddPageState extends State<AbsensiAddPage> {
 
   Future<void> checkInOut(String type) async {
     setState(() => loading = true);
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-
-    String? base64Image;
-    if (kIsWeb) {
-      if (_webImageFile != null) {
-        final bytes = await _webImageFile!.readAsBytes();
-        base64Image = base64Encode(bytes);
-      } else if (_webImageDataUrl != null) {
-        base64Image = _webImageDataUrl!.split(',').last;
-      }
-    } else if (_imageFile != null) {
-      final bytes = await _imageFile!.readAsBytes();
-      base64Image = base64Encode(bytes);
-    }
-
     final loc = await getCurrentLocation();
 
     final uri = Uri.parse("${ApiConfig.baseUrl}/attendance/$type");
     final request = http.MultipartRequest('POST', uri);
+
     request.headers['Authorization'] = "Bearer $token";
     request.headers['Accept'] = "application/json";
 
+    // ========= FIX BAGIAN FOTO =========
     if (!kIsWeb && _imageFile != null) {
+      // MOBILE
       request.files.add(
-        await http.MultipartFile.fromPath('photo', _imageFile!.path),
+        await http.MultipartFile.fromPath(
+          'photo',
+          _imageFile!.path,
+          contentType: MediaType('image', 'jpeg'),
+        ),
       );
-    } else if (base64Image != null) {
+    } else if (kIsWeb && _webImageFile != null) {
+      // WEB
+      final bytes = await _webImageFile!.readAsBytes();
+
       request.files.add(
         http.MultipartFile.fromBytes(
           'photo',
-          base64Decode(base64Image),
+          bytes,
           filename: 'photo.jpg',
+          contentType: MediaType('image', 'jpeg'), // <-- WAJIB!!!
         ),
       );
     }
 
+    // Lokasi wajib
     request.fields['lat'] = loc['lat'].toString();
     request.fields['lng'] = loc['lng'].toString();
 
@@ -97,15 +95,15 @@ class _AbsensiAddPageState extends State<AbsensiAddPage> {
     final resBody = await response.stream.bytesToString();
 
     setState(() => loading = false);
+
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("$type berhasil")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("$type berhasil")));
     } else {
       final data = jsonDecode(resBody);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(data['message'] ?? "Gagal $type")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message'] ?? "Gagal $type")),
+      );
     }
   }
 
@@ -120,9 +118,9 @@ class _AbsensiAddPageState extends State<AbsensiAddPage> {
             Center(
               child: _imageFile != null
                   ? Image.file(_imageFile!, height: 150)
-                  : _webImageDataUrl != null
-                  ? Image.network(_webImageDataUrl!, height: 150)
-                  : Icon(Icons.camera_alt, size: 150),
+                  : _webImageFile != null
+                      ? Image.network(_webImageFile!.path, height: 150)
+                      : Icon(Icons.camera_alt, size: 150),
             ),
             SizedBox(height: 10),
             Row(

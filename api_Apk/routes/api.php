@@ -6,35 +6,50 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DivisionSettingController;
 
+// ===================
+// PUBLIC AUTH ROUTES
+// ===================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// ===================
+// PROTECTED ROUTES
+// ===================
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
-});
 
+    // ===================
+    // ATTENDANCE
+    // ===================
+    Route::prefix('attendance')->group(function () {
+        Route::post('/checkin', [AttendanceController::class, 'checkIn']);
+        Route::post('/checkout', [AttendanceController::class, 'checkOut']);
+        Route::get('/history', [AttendanceController::class, 'history']);
+    });
 
+    // ===================
+    // USERS
+    // ===================
+    Route::apiResource('users', UserController::class);
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('attendance/checkin', [AttendanceController::class, 'checkIn']);
-    Route::post('attendance/checkout', [AttendanceController::class, 'checkOut']);
-    Route::get('attendance/history', [AttendanceController::class, 'history']);
-});
+//     Route::post('/attendance/checkin', function () {
+//     return response()->json([
+//         'AUTH' => request()->header('Authorization')
+//     ]);
+// });
 
-Route::middleware('auth:sanctum')->group(function () {
+    // ===================
+    // DIVISION SETTINGS
+    // ===================
+    Route::prefix('division-settings')->group(function () {
+        Route::get('/', [DivisionSettingController::class, 'index']);
+        Route::post('/', [DivisionSettingController::class, 'store']);
+        Route::get('/by-division/{division_id}', [DivisionSettingController::class, 'getByDivision']);
+        Route::get('/{id}', [DivisionSettingController::class, 'show']);
+        Route::put('/{id}', [DivisionSettingController::class, 'update']);
+        Route::delete('/{id}', [DivisionSettingController::class, 'destroy']);
+    });
 
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::put('/users/{id}', [UserController::class, 'update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy']);
-});
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/division-settings', [DivisionSettingController::class, 'index']);
-    Route::get('/division-settings/{id}', [DivisionSettingController::class, 'show']);
-    Route::get('/division-settings/by-division/{division_id}', [DivisionSettingController::class, 'getByDivision']);
-    Route::post('/division-settings', [DivisionSettingController::class, 'store']);
-    Route::put('/division-settings/{id}', [DivisionSettingController::class, 'update']);
-    Route::delete('/division-settings/{id}', [DivisionSettingController::class, 'destroy']);
 });
