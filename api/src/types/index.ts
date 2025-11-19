@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { User, Division, Attendance, Overtime } from '@prisma/client';
+import { User, Division, Attendance, Overtime, Role } from '@prisma/client';
 
 export interface AuthRequest extends Request {
   user?: User;
@@ -21,6 +21,36 @@ export interface RegisterRequest {
   phone?: string;
   address?: string;
 }
+
+export interface UserCreateData {
+  employeeId: string;
+  name: string;
+  email: string;
+  password: string;
+  division: Division;
+  position: string;
+  joinDate: string | Date; // Bisa string atau Date
+  phone?: string;
+  address?: string;
+  photo?: string;
+}
+
+export type UserWithoutPassword = {
+  id: number;
+  employeeId: string;
+  name: string;
+  email: string;
+  division: Division;
+  role: Role;
+  position: string;
+  joinDate: Date;
+  phone?: string | null;
+  address?: string | null;
+  photo?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export interface AttendanceRequest {
   date?: string;

@@ -224,7 +224,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeId\": \"EMP001\",\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@company.com\",\n  \"password\": \"password123\",\n  \"division\": \"FINANCE\",\n  \"position\": \"Staff\",\n  \"joinDate\": \"2025-01-01\",\n  \"phone\": \"08123456789\",\n  \"address\": \"Jl. Contoh No. 123\"\n}"
+              "raw": "{\n  \"employeeId\": \"EMP001\",\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@company.com\",\n  \"password\": \"password123\",\n  \"division\": \"FINANCE\",\n  \"position\": \"Staff\",\n  \"joinDate\": \"2025-01-01T00:00:00.000Z\",\n  \"phone\": \"08123456789\",\n  \"address\": \"Jl. Contoh No. 123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/users",

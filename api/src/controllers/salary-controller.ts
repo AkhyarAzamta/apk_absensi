@@ -146,7 +146,15 @@ export class SalaryController {
 
           const calculatedSalary = calculateSalary(salaryData);
 
-          // Simpan atau update gaji - variabel salary digunakan
+          // Mapping dari deductions (jamak) ke deduction (tunggal) untuk Prisma
+          const salaryForDB = {
+            baseSalary: calculatedSalary.baseSalary,
+            overtimeSalary: calculatedSalary.overtimeSalary,
+            deduction: calculatedSalary.deductions, // Ubah dari deductions ke deduction
+            totalSalary: calculatedSalary.totalSalary,
+          };
+
+          // Simpan atau update gaji
           await prisma.salary.upsert({
             where: {
               userId_month_year: {
@@ -155,12 +163,12 @@ export class SalaryController {
                 year,
               },
             },
-            update: calculatedSalary,
+            update: salaryForDB,
             create: {
               userId: user.id,
               month,
               year,
-              ...calculatedSalary,
+              ...salaryForDB,
             },
           });
 

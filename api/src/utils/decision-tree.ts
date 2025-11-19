@@ -14,9 +14,9 @@ export const calculateSalary = (data: SalaryCalculationData): DecisionTreeResult
   const baseSalary = baseSalaries[division] || 6000000;
   
   // Calculate working days (for information, but not used in calculation)
-  // const _workingDays = attendances.filter(att => 
-  //   att.status === 'PRESENT' || att.status === 'LATE'
-  // ).length;
+  const _workingDays = attendances.filter(att => 
+    att.status === 'PRESENT' || att.status === 'LATE'
+  ).length;
 
   // Calculate deductions for lateness
   const totalLateMinutes = attendances.reduce((sum, att) => sum + att.lateMinutes, 0);
@@ -45,7 +45,7 @@ export const calculateSalary = (data: SalaryCalculationData): DecisionTreeResult
   return {
     baseSalary,
     overtimeSalary,
-    deductions,
+    deductions, // Tetap menggunakan 'deductions' di return type, tapi akan di-mapping di controller
     totalSalary: Math.max(0, totalSalary)
   };
 };

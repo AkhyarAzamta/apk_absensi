@@ -100,7 +100,25 @@ export class LeaveController {
           notes,
         },
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true,
+              employeeId: true,
+              name: true,
+              email: true,
+              division: true,
+              role: true,
+              position: true,
+              joinDate: true,
+              phone: true,
+              address: true,
+              photo: true,
+              isActive: true,
+              createdAt: true,
+              updatedAt: true,
+              // Password tidak disertakan
+            },
+          },
         },
       });
 

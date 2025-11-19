@@ -6,6 +6,31 @@ const prisma = new PrismaClient();
 // Define type without password
 type UserWithoutPassword = Omit<User, 'password'>;
 
+// Helper function untuk parse date
+const parseDate = (dateInput: string | Date): Date => {
+  if (dateInput instanceof Date) {
+    return dateInput;
+  }
+  
+  // Coba parse sebagai ISO string
+  let date = new Date(dateInput);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+  
+  // Jika gagal, coba format YYYY-MM-DD
+  const match = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [_, year, month, day] = match;
+    date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+  }
+  
+  throw new Error(`Invalid date format: ${dateInput}`);
+};
+
 export class UserService {
   async getAllUsers(division?: Division): Promise<UserWithoutPassword[]> {
     const whereClause = division ? { division, isActive: true } : { isActive: true };
@@ -60,16 +85,20 @@ export class UserService {
     password: string;
     division: Division;
     position: string;
-    joinDate: Date;
+    joinDate: string | Date;
     phone?: string;
     address?: string;
     photo?: string;
   }): Promise<UserWithoutPassword> {
     const hashedPassword = await hashPassword(userData.password);
 
+    // Parse joinDate dengan fungsi helper
+    const joinDate = parseDate(userData.joinDate);
+
     return await prisma.user.create({
       data: {
         ...userData,
+        joinDate: joinDate,
         password: hashedPassword,
       },
       select: {
@@ -90,7 +119,6 @@ export class UserService {
       },
     }) as UserWithoutPassword;
   }
-
   async updateUser(
     id: number, 
     updateData: Partial<Omit<User, 'id' | 'password'>>
