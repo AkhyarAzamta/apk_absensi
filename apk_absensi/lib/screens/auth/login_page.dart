@@ -13,6 +13,34 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailC = TextEditingController();
   final TextEditingController passC = TextEditingController();
   bool loading = false;
+  bool _obscureText = true;
+
+  // Mapping untuk role dan division
+  int _mapRoleToId(String role) {
+    switch (role) {
+      case 'SUPER_ADMIN':
+        return 1;
+      case 'USER':
+        return 2;
+      default:
+        return 2;
+    }
+  }
+
+  int _mapDivisionToId(String division) {
+    switch (division) {
+      case 'FINANCE':
+        return 1;
+      case 'APO':
+        return 2;
+      case 'FRONT_DESK':
+        return 3;
+      case 'ONSITE':
+        return 4;
+      default:
+        return 0;
+    }
+  }
 
   Future<void> login() async {
     if (emailC.text.isEmpty || passC.text.isEmpty) {
@@ -25,17 +53,14 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => loading = true);
 
     try {
-      final url = Uri.parse("${ApiConfig.baseUrl}/login");
+      final url = Uri.parse("${ApiConfig.baseUrl}/auth/login");
 
       print('Mengirim login request ke: $url');
       print('Email: ${emailC.text.trim()}');
 
       final response = await http.post(
         url,
-        body: {
-          "email": emailC.text.trim(), 
-          "password": passC.text.trim()
-        },
+        body: {"email": emailC.text.trim(), "password": passC.text.trim()},
       );
 
       print('Response status: ${response.statusCode}');
@@ -45,67 +70,83 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => loading = false);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final user = data["user"];
+        final responseData = jsonDecode(response.body);
 
         // Debug: print structure of response
-        print('Data keys: ${data.keys}');
-        print('User keys: ${user.keys}');
+        print('Response keys: ${responseData.keys}');
 
-        SharedPreferences prefs = await SharedPreferences.getInstance();
+        if (responseData['success'] == true) {
+          final data = responseData['data'];
+          print('Data keys: ${data.keys}');
 
-        // ✅ PERBAIKAN: Gunakan "token" bukan "token"
-        String? token = data["token"];
-        if (token == null) {
-          // Coba alternatif key names
-          token = data["access_token"] ?? data["auth_token"] ?? data["token"];
-        }
+          final user = data['user'];
+          print('User data: $user');
 
-        if (token == null) {
-          throw Exception('Token tidak ditemukan dalam response');
-        }
+          // ✅ PERBAIKAN: Ambil token dari data, bukan langsung dari response
+          String? token = data["token"];
+          if (token == null) {
+            // Coba alternatif key names
+            token = data["access_token"] ?? data["auth_token"];
+          }
 
-        print('Token yang disimpan: ${token.substring(0, 20)}...');
+          if (token == null) {
+            throw Exception('Token tidak ditemukan dalam response');
+          }
 
-        await prefs.setString("token", token); // ✅ Key yang benar
-        await prefs.setInt("role_id", user["role_id"]);
-        await prefs.setInt("division_id", user["division_id"] ?? 0);
-        await prefs.setInt("user_id", user["id"]);
-        await prefs.setString("user_name", user["name"]);
-        await prefs.setString("user_email", user["email"]);
+          print('Token yang disimpan: ${token.substring(0, 20)}...');
 
-        int roleId = user["role_id"];
-        int divId = user["division_id"] ?? 0;
+          SharedPreferences prefs = await SharedPreferences.getInstance();
 
-        print('Login berhasil - Role: $roleId, Division: $divId');
+          await prefs.setString("token", token);
 
-        if (roleId == 1) {
-          if (divId == 1) {
-            Navigator.pushReplacementNamed(context, "/dashboard_finance");
-          } else if (divId == 2) {
-            Navigator.pushReplacementNamed(context, "/dashboard_apo");
-          } else if (divId == 3) {
-            Navigator.pushReplacementNamed(context, "/dashboard_frontdesk");
-          } else if (divId == 4) {
-            Navigator.pushReplacementNamed(context, "/dashboard_onsite");
+          // ✅ PERBAIKAN: Gunakan mapping untuk role dan division
+          int roleId = _mapRoleToId(user["role"]);
+          int divId = _mapDivisionToId(user["division"]);
+
+          await prefs.setInt("role_id", roleId);
+          await prefs.setInt("division_id", divId);
+          await prefs.setInt("user_id", user["id"]);
+          await prefs.setString("user_name", user["name"]);
+          await prefs.setString("user_email", user["email"]);
+          await prefs.setString("employee_id", user["employeeId"] ?? "");
+          await prefs.setString("position", user["position"] ?? "");
+          await prefs.setString("division", user["division"] ?? "");
+
+          print('Login berhasil - Role: $roleId, Division: $divId');
+
+          // Navigasi berdasarkan role dan division
+          if (roleId == 1) {
+            // SUPER_ADMIN
+            switch (roleId) {
+              case 1: // FINANCE
+                Navigator.pushReplacementNamed(context, "/dashboard_finance");
+                break;
+              case 2: // APO
+                Navigator.pushReplacementNamed(context, "/dashboard_apo");
+                break;
+              case 3: // FRONT_DESK
+                Navigator.pushReplacementNamed(context, "/dashboard_frontdesk");
+                break;
+              case 4: // ONSITE
+                Navigator.pushReplacementNamed(context, "/dashboard_onsite");
+                break;
+              default:
+                Navigator.pushReplacementNamed(context, "/dashboard_user");
+            }
           } else {
-            // Default untuk admin tanpa division spesifik
+            // USER atau role lainnya
             Navigator.pushReplacementNamed(context, "/dashboard_user");
           }
-        } else if (roleId == 2) {
-          Navigator.pushReplacementNamed(context, "/dashboard_user");
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Role tidak dikenali!")),
+            SnackBar(content: Text(responseData["message"] ?? "Login gagal!")),
           );
         }
       } else {
         final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              errorData["message"] ?? "Email atau password salah!"
-            ),
+            content: Text(errorData["message"] ?? "Email atau password salah!"),
           ),
         );
       }
@@ -113,12 +154,16 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       setState(() => loading = false);
       print('Error during login: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
   }
 
   @override
@@ -128,6 +173,7 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text("Absensi Karyawan"),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
+        elevation: 0,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -163,21 +209,32 @@ class _LoginPageState extends State<LoginPage> {
                     controller: emailC,
                     decoration: InputDecoration(
                       labelText: "Email",
-                      prefixIcon: Icon(Icons.email),
+                      hintText: "masukkan email anda",
+                      prefixIcon: const Icon(Icons.email),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                       filled: true,
                       fillColor: Colors.white,
                     ),
+                    keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: passC,
-                    obscureText: true,
+                    obscureText: _obscureText,
                     decoration: InputDecoration(
                       labelText: "Password",
-                      prefixIcon: Icon(Icons.lock),
+                      hintText: "masukkan password anda",
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureText
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: _togglePasswordVisibility,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -199,10 +256,11 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
                           ),
                           child: const Text(
                             "Login",
-                            style: TextStyle(fontSize: 18, color: Colors.white),
+                            style: TextStyle(fontSize: 18),
                           ),
                         ),
                   const SizedBox(height: 20),
