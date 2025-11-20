@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:apk_absensi/config/api.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:apk_absensi/widgets/attendance_widgets.dart';
 
 class TodayAttendance {
   int? id;
@@ -749,25 +750,13 @@ class _AbsensiPageState extends State<AbsensiPage> {
                                           fontSize: 16,
                                         ),
                                       ),
-                                      if (_todayAttendance?.lateMinutes != null && _todayAttendance!.lateMinutes! > 0) ...[
-                                        SizedBox(width: 8),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange[50],
-                                            borderRadius: BorderRadius.circular(4),
-                                            border: Border.all(color: Colors.orange),
-                                          ),
-                                          child: Text(
-                                            '${_todayAttendance!.lateMinutes} menit terlambat',
-                                            style: TextStyle(
-                                              color: Colors.orange[800],
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ]
+                                    if (_todayAttendance?.lateMinutes != null && _todayAttendance!.lateMinutes! > 0) ...[
+                                      const SizedBox(width: 8),
+                                      AttendanceWidgets.buildLateBadge(
+                                        lateMinutes: _todayAttendance!.lateMinutes,
+                                        useCompactFormat: true,
+                                      ),
+                                    ]
                                     ],
                                   ),
                                   SizedBox(height: 8),

@@ -6,6 +6,7 @@ import 'package:apk_absensi/config/api.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'absensi_detail_page.dart';
+import 'package:apk_absensi/widgets/attendance_widgets.dart';
 
 class AbsensiListPage extends StatefulWidget {
   @override
@@ -31,7 +32,7 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
       setState(() {
         _dateFormatInitialized = true;
       });
-      
+
       // Then load token and history
       await _loadTokenAndHistory();
     } catch (e) {
@@ -153,20 +154,22 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
+
     // Fix image path - remove double /api/ if exists
-    String cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-    
+    String cleanPath = imagePath.startsWith('/')
+        ? imagePath.substring(1)
+        : imagePath;
+
     // Check if path already contains 'api/'
     if (cleanPath.startsWith('api/')) {
       cleanPath = cleanPath.substring(4); // Remove 'api/' prefix
     }
-    
+
     // Check if path already contains 'public/'
     if (!cleanPath.startsWith('public/')) {
       cleanPath = 'public/$cleanPath';
     }
-    
+
     return "${ApiConfig.baseUrl}/$cleanPath";
   }
 
@@ -174,9 +177,7 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
   Widget build(BuildContext context) {
     // Show loading until date formatting is initialized
     if (!_dateFormatInitialized || _loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -317,11 +318,11 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
                             if (attendance['lateMinutes'] != null &&
                                 attendance['lateMinutes'] > 0) ...[
                               const SizedBox(height: 2),
-                              _buildInfoRow(
-                                Icons.schedule,
-                                'Terlambat:',
-                                '${attendance['lateMinutes']} menit',
-                                Colors.orange,
+                              AttendanceWidgets.buildLateMinutesInfo(
+                                lateMinutes: attendance['lateMinutes'],
+                                useCompactFormat: false,
+                                iconSize: 16,
+                                fontSize: 12,
                               ),
                             ],
                             if (attendance['notes'] != null &&
@@ -361,10 +362,7 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
                           ],
                         ),
                       ),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 14,
-                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -389,10 +387,7 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
         const SizedBox(width: 4),
         Expanded(
