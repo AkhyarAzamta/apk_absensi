@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class LeaveRequest {
   final int? id;
   final int userId;
@@ -6,7 +8,7 @@ class LeaveRequest {
   final String type;
   final String reason;
   final String status;
-  final String? approvedBy;
+  final int? approvedBy;
   final String? notes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -36,8 +38,12 @@ class LeaveRequest {
       status: json['status'],
       approvedBy: json['approvedBy'],
       notes: json['notes'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
     );
   }
 
@@ -48,6 +54,28 @@ class LeaveRequest {
       'type': type,
       'reason': reason,
     };
+  }
+
+  // Get duration in days
+  int get durationInDays {
+    return endDate.difference(startDate).inDays + 1;
+  }
+
+  // Check if leave is in the past
+  bool get isPast {
+    return endDate.isBefore(DateTime.now());
+  }
+
+  // Check if leave is current
+  bool get isCurrent {
+    final now = DateTime.now();
+    return (startDate.isBefore(now) || startDate.isAtSameMomentAs(now)) &&
+        (endDate.isAfter(now) || endDate.isAtSameMomentAs(now));
+  }
+
+  // Check if leave is upcoming
+  bool get isUpcoming {
+    return startDate.isAfter(DateTime.now());
   }
 }
 
@@ -63,10 +91,43 @@ class LeaveData {
     LeaveType('CUTI_TAHUNAN', 'Cuti Tahunan'),
     LeaveType('CUTI_SAKIT', 'Cuti Sakit'),
     LeaveType('CUTI_MELAHIRKAN', 'Cuti Melahirkan'),
+    LeaveType('CUTI_PENTING', 'Cuti Kepentingan Penting'),
+    LeaveType('CUTI_BESAR', 'Cuti Besar'),
     LeaveType('CUTI_ALASAN_PENTING', 'Cuti Alasan Penting'),
   ];
 
   static String getLabel(String value) {
-    return types.firstWhere((type) => type.value == value, orElse: () => LeaveType(value, value)).label;
+    return types
+        .firstWhere(
+          (type) => type.value == value,
+          orElse: () => LeaveType(value, value),
+        )
+        .label;
+  }
+
+  static Color getStatusColor(String status) {
+    switch (status) {
+      case 'APPROVED':
+        return Colors.green;
+      case 'PENDING':
+        return Colors.orange;
+      case 'REJECTED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  static String getStatusLabel(String status) {
+    switch (status) {
+      case 'APPROVED':
+        return 'Disetujui';
+      case 'PENDING':
+        return 'Menunggu';
+      case 'REJECTED':
+        return 'Ditolak';
+      default:
+        return status;
+    }
   }
 }
