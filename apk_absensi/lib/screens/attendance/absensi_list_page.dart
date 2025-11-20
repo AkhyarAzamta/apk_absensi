@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:apk_absensi/config/api.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'absensi_detail_page.dart';
 
 class AbsensiListPage extends StatefulWidget {
@@ -15,11 +16,30 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
   List<dynamic> _attendanceList = [];
   bool _loading = true;
   String? _token;
+  bool _dateFormatInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadTokenAndHistory();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      // Initialize date formatting first
+      await initializeDateFormatting('id_ID', null);
+      setState(() {
+        _dateFormatInitialized = true;
+      });
+      
+      // Then load token and history
+      await _loadTokenAndHistory();
+    } catch (e) {
+      print('Error initializing app: $e');
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   Future<void> _loadTokenAndHistory() async {
@@ -129,17 +149,43 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
     }
   }
 
+  String _getImageUrl(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Fix image path - remove double /api/ if exists
+    String cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    
+    // Check if path already contains 'api/'
+    if (cleanPath.startsWith('api/')) {
+      cleanPath = cleanPath.substring(4); // Remove 'api/' prefix
+    }
+    
+    // Check if path already contains 'public/'
+    if (!cleanPath.startsWith('public/')) {
+      cleanPath = 'public/$cleanPath';
+    }
+    
+    return "${ApiConfig.baseUrl}/$cleanPath";
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Show loading until date formatting is initialized
+    if (!_dateFormatInitialized || _loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Riwayat Absensi"),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _attendanceList.isEmpty
+      body: _attendanceList.isEmpty
           ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -156,6 +202,7 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
           : RefreshIndicator(
               onRefresh: _loadAttendanceHistory,
               child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: _attendanceList.length,
                 itemBuilder: (context, index) {
                   final attendance = _attendanceList[index];
@@ -174,12 +221,17 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
                   return Card(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 8,
+                      vertical: 6,
                     ),
                     elevation: 2,
                     child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       leading: Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 50,
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: Colors.blue[50],
                           borderRadius: BorderRadius.circular(8),
@@ -191,14 +243,14 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
                               DateFormat('dd').format(date),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                                 color: Colors.blueAccent,
                               ),
                             ),
                             Text(
                               DateFormat('MMM').format(date),
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 10,
                                 color: Colors.blueAccent,
                               ),
                             ),
@@ -212,13 +264,16 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
                               DateFormat('EEEE', 'id_ID').format(date),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                fontSize: 14,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: 6,
+                              vertical: 2,
                             ),
                             decoration: BoxDecoration(
                               color: _getStatusColor(
@@ -227,95 +282,89 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
                                 color: _getStatusColor(attendance['status']),
+                                width: 1,
                               ),
                             ),
                             child: Text(
                               _formatStatus(attendance['status']),
                               style: TextStyle(
                                 color: _getStatusColor(attendance['status']),
-                                fontSize: 12,
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.login, size: 16, color: Colors.green),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'Masuk: ',
-                                style: TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                              Text(checkIn),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Icon(Icons.logout, size: 16, color: Colors.blue),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'Pulang: ',
-                                style: TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                              Text(checkOut),
-                            ],
-                          ),
-                          if (attendance['lateMinutes'] != null &&
-                              attendance['lateMinutes'] > 0) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.schedule,
-                                  size: 16,
-                                  color: Colors.orange,
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Terlambat: ',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                                Text('${attendance['lateMinutes']} menit'),
-                              ],
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildInfoRow(
+                              Icons.login,
+                              'Masuk:',
+                              checkIn,
+                              Colors.green,
                             ),
-                          ],
-                          if (attendance['notes'] != null &&
-                              attendance['notes'].isNotEmpty) ...[
                             const SizedBox(height: 2),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.note,
-                                  size: 16,
-                                  color: Colors.orange,
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Catatan: ',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    attendance['notes'],
-                                    style: const TextStyle(
-                                      fontStyle: FontStyle.italic,
+                            _buildInfoRow(
+                              Icons.logout,
+                              'Pulang:',
+                              checkOut,
+                              Colors.blue,
+                            ),
+                            if (attendance['lateMinutes'] != null &&
+                                attendance['lateMinutes'] > 0) ...[
+                              const SizedBox(height: 2),
+                              _buildInfoRow(
+                                Icons.schedule,
+                                'Terlambat:',
+                                '${attendance['lateMinutes']} menit',
+                                Colors.orange,
+                              ),
+                            ],
+                            if (attendance['notes'] != null &&
+                                attendance['notes'].isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.note,
+                                    size: 14,
+                                    color: Colors.orange,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Catatan:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      attendance['notes'],
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                      ),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -330,6 +379,30 @@ class _AbsensiListPageState extends State<AbsensiListPage> {
                 },
               ),
             ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
