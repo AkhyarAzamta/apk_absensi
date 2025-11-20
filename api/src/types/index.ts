@@ -150,3 +150,14 @@ export interface AttendanceCheckInOutRequest {
   location: string;
   selfie: Buffer;
 }
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface UpdateProfileRequest {
+  password?: string;
+  currentPassword?: string;
+  // Photo akan ditangani sebagai file upload
+}
