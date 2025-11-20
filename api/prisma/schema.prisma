@@ -96,7 +96,7 @@ enum LeaveType {
   CUTI_TAHUNAN
   CUTI_SAKIT
   CUTI_MELAHIRKAN
-  IZIN
+  CUTI_ALASAN_PENTING
 }
 
 enum LeaveStatus {

@@ -8,6 +8,8 @@ import 'screens/dashboard/dashboard_onsite.dart';
 import 'screens/auth/login_page.dart';
 import 'screens/users/user_list_page.dart';
 import 'screens/users/user_add_page.dart';
+import 'screens/leave/apply_leave_page.dart';
+
 import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
 
@@ -57,6 +59,7 @@ class MyApp extends StatelessWidget {
         // crud usrs
         "/users": (context) => UserListPage(),
         "/user/add": (context) => UserAddPage(),
+        "/apply-leave": (context) => ApplyLeavePage(),
       },
     );
   }

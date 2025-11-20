@@ -37,12 +37,6 @@ class _DashboardUserState extends State<DashboardUser> {
       userToken = prefs.getString("token") ?? ""; // ✅ PERBAIKAN: gunakan "token" bukan "token"
     });
     
-    // Debug info
-    print('User: $Name');
-    print('Email: $userEmail');
-    print('Token: ${userToken?.substring(0, 20)}...');
-    print('Token length: ${userToken?.length}');
-    
     // Check semua keys yang ada di SharedPreferences
     final allKeys = prefs.getKeys();
     print('All SharedPreferences keys: $allKeys');
@@ -70,8 +64,6 @@ class _DashboardUserState extends State<DashboardUser> {
         Navigator.pushReplacementNamed(context, '/login');
         return;
       }
-
-      print('Membuka absensi dengan token: ${currentToken.substring(0, 20)}...');
       
       Navigator.push(
         context,
@@ -82,9 +74,12 @@ class _DashboardUserState extends State<DashboardUser> {
           ),
         ),
       );
+    } else if (title == "Ajukan Cuti") {
+      // ✅ TAMBAHKAN: Navigasi ke halaman ajukan cuti
+      Navigator.pushNamed(context, '/apply-leave');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Menu $title diklik"))
+        SnackBar(content: Text("Fitur $title sedang dalam pengembangan"))
       );
     }
   }

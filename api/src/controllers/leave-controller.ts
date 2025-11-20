@@ -36,6 +36,7 @@ export class LeaveController {
       });
     } catch (error: any) {
       console.error('Leave request error:', error);
+      console.log(error)
       res.status(400).json({
         success: false,
         message: error.message || 'Failed to submit leave request',
