@@ -1,11 +1,14 @@
+// api/src/middleware/upload.ts
 import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
 
 // Configure storage
-const storage = multer.memoryStorage(); // Store files in memory as buffer
+const storage = multer.memoryStorage();
 
 // File filter for images only
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  console.log('Uploading file:', file.originalname, file.mimetype);
+  
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
@@ -21,7 +24,10 @@ const upload = multer({
   },
 });
 
+// Middleware untuk menangani error upload
 export const handleUploadError = (error: any, _req: Request, res: Response, next: NextFunction): void => {
+  console.log('Upload error:', error);
+  
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       res.status(400).json({
@@ -44,7 +50,7 @@ export const handleUploadError = (error: any, _req: Request, res: Response, next
     });
     return;
   }
-  return next();
+  next();
 };
 
 export const uploadSinglePhoto = upload.single('photo');

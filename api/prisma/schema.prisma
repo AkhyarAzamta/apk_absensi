@@ -169,12 +169,15 @@ enum NotificationType {
 }
 
 model DivisionSetting {
-  id          Int    @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   division    Division @unique
   workStart   String   // Format: "HH:MM"
   workEnd     String   // Format: "HH:MM"
   lateThreshold Int    @default(15) // dalam menit
   deductionPerMinute Float @default(1000.0) // potongan per menit
+  baseSalary  Float   @default(0.0) // Gaji pokok untuk divisi ini
+  overtimeRateMultiplier Float @default(1.5) // Rate multiplier untuk lembur
+  workingDaysPerMonth Int @default(22) // Hari kerja per bulan
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -185,6 +188,7 @@ model SystemSetting {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String
+  description String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

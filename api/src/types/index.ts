@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { User, Division, Attendance, Overtime, Role } from '@prisma/client';
+import { User, Division, Role } from '@prisma/client';
 
 export interface AuthRequest extends Request {
   user?: User;
@@ -27,12 +27,24 @@ export interface UserCreateData {
   name: string;
   email: string;
   password: string;
+  division: string;
+  position: string;
+  joinDate: string | Date;
+  phone?: string; // Ubah dari string | undefined menjadi string
+  address?: string; // Ubah dari string | undefined menjadi string
+  photo?: string; // Tambahkan photo sebagai optional
+}
+
+export interface UserUpdateData {
+  name: string;
+  email: string;
   division: Division;
   position: string;
-  joinDate: string | Date; // Bisa string atau Date
-  phone?: string;
-  address?: string;
+  phone?: string | null;
+  address?: string | null;
   photo?: string;
+  isActive?: boolean;
+  employeeId: string;
 }
 
 export type UserWithoutPassword = {
@@ -84,19 +96,30 @@ export interface ReportFilter {
 }
 
 export interface SalaryCalculationData {
-  userId: number;
+  attendances: Array<{
+    status: 'PRESENT' | 'LATE' | 'ABSENT' | 'SICK' | 'LEAVE';
+    lateMinutes: number;
+    date: Date;
+  }>;
+  overtimes: Array<{
+    status: 'APPROVED' | 'REJECTED' | 'PENDING';
+    hours: number;
+    date: Date;
+  }>;
+  division: Division; // Ubah dari string ke Division
   month: number;
   year: number;
-  attendances: Attendance[];
-  overtimes: Overtime[];
-  division: Division;
 }
 
+// HAPUS duplikat dan gunakan yang ini saja
 export interface DecisionTreeResult {
   baseSalary: number;
   overtimeSalary: number;
-  deductions: number;
+  lateDeductions: number; // Ganti deductions menjadi lateDeductions
   totalSalary: number;
+  presentDays: number;
+  totalLateMinutes: number;
+  approvedOvertimeHours: number;
 }
 
 export interface NaiveBayesResult {

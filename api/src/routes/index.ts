@@ -7,6 +7,8 @@ import overtimeRoutes from './overtime';
 import reportRoutes from './report';
 import notificationRoutes from './notification';
 import salaryRoutes from './salary';
+import divisionSettingRoutes from './division-setting';
+import analysisRoutes from './analysis';
 
 const router = Router();
 
@@ -18,5 +20,7 @@ router.use('/overtime', overtimeRoutes);
 router.use('/reports', reportRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/salaries', salaryRoutes);
+router.use('/division-settings', divisionSettingRoutes);
+router.use('/analysis', analysisRoutes);
 
 export default router;
