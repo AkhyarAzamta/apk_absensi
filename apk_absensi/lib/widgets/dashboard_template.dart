@@ -4,6 +4,7 @@ import 'package:apk_absensi/screens/auth/login_page.dart';
 import 'package:apk_absensi/screens/users/profile/profile_page.dart';
 import 'package:apk_absensi/screens/settings/settings_page.dart';
 import 'package:apk_absensi/services/profile_service.dart';
+import 'package:apk_absensi/screens/help/help_page.dart';
 
 Widget buildDashboard({
   required BuildContext context,
@@ -148,16 +149,12 @@ Widget _buildDrawer({
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   onTap: () {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Navigasi ke Bantuan"),
-                        backgroundColor: Colors.orangeAccent,
-                      ),
+                    Navigator.of(context).pop(); // Tutup drawer
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => HelpPage()),
                     );
                   },
                 ),
-
                 const Divider(thickness: 1),
 
                 // Logout
@@ -235,10 +232,7 @@ Widget _buildDrawerHeader({
                   const SizedBox(height: 4),
                   Text(
                     displayEmail,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -255,7 +249,7 @@ Widget _buildDrawerHeader({
 Widget _buildProfileAvatar(String? photoUrl, ProfileService profileService) {
   if (photoUrl != null && photoUrl.isNotEmpty) {
     final fullPhotoUrl = profileService.getProfilePhotoUrl(photoUrl);
-    
+
     return CircleAvatar(
       radius: 30,
       backgroundColor: Colors.white,
@@ -264,23 +258,15 @@ Widget _buildProfileAvatar(String? photoUrl, ProfileService profileService) {
         // Fallback ke icon jika gambar error
         print('Error loading profile image: $exception');
       },
-      child: photoUrl.isEmpty 
-          ? const Icon(
-              Icons.person,
-              color: Colors.greenAccent,
-              size: 30,
-            )
+      child: photoUrl.isEmpty
+          ? const Icon(Icons.person, color: Colors.greenAccent, size: 30)
           : null,
     );
   } else {
     return const CircleAvatar(
       radius: 30,
       backgroundColor: Colors.white,
-      child: Icon(
-        Icons.person,
-        color: Colors.greenAccent,
-        size: 30,
-      ),
+      child: Icon(Icons.person, color: Colors.greenAccent, size: 30),
     );
   }
 }

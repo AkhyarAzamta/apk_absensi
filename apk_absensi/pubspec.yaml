@@ -41,6 +41,7 @@ dependencies:
   google_mlkit_face_detection: ^0.3.0
   webview_flutter: ^4.2.1
   js: ^0.6.5
+  url_launcher: ^6.1.11
   # tflite_flutter: ^0.10.0
   # tflite_flutter_helper: ^0.4.2
 
