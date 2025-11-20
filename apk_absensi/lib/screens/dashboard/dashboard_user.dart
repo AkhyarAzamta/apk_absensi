@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/dashboard_template.dart';
 import '../attendance/absensi_list_page.dart';
 import '../attendance/absensi_page.dart';
-import '../leave/leave_list_page.dart'; // Import halaman daftar cuti
+import '../leave/leave_list_page.dart';
+import '../overtime/overtime_list_page.dart'; // Import halaman lembur
 
 class DashboardUser extends StatefulWidget {
   @override
@@ -13,8 +14,8 @@ class DashboardUser extends StatefulWidget {
 class _DashboardUserState extends State<DashboardUser> {
   List<Map<String, dynamic>> menu = [
     {"title": "Absensi", "icon": Icons.camera_alt},
-    {"title": "Cuti Saya", "icon": Icons.beach_access}, // Ganti dari "Ajukan Cuti" menjadi "Cuti Saya"
-    {"title": "Ajukan Lembur", "icon": Icons.timer},
+    {"title": "Cuti Saya", "icon": Icons.beach_access},
+    {"title": "Lembur Saya", "icon": Icons.timer}, // Ganti dari "Ajukan Lembur" menjadi "Lembur Saya"
     {"title": "Riwayat Absensi", "icon": Icons.history},
     {"title": "Gaji & Potongan", "icon": Icons.money},
   ];
@@ -74,10 +75,15 @@ class _DashboardUserState extends State<DashboardUser> {
         ),
       );
     } else if (title == "Cuti Saya") {
-      // ✅ Navigasi ke halaman daftar cuti
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => LeaveListPage()),
+      );
+    } else if (title == "Lembur Saya") {
+      // ✅ Navigasi ke halaman daftar lembur
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => OvertimeListPage()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
