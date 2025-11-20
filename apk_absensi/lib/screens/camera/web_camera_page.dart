@@ -1,7 +1,7 @@
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import '../../main.dart'; // akses globalVideoElement
+import 'package:apk_absensi/main.dart'; // akses globalVideoElement
 
 class WebCameraPage extends StatefulWidget {
   @override
