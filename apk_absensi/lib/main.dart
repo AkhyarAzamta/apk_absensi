@@ -1,4 +1,5 @@
 import 'package:apk_absensi/screens/leave/leave_list_page.dart';
+import 'package:apk_absensi/screens/users/profile/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'screens/splash_checker.dart';
 import 'screens/dashboard/dashboard_user.dart';
@@ -61,7 +62,8 @@ class MyApp extends StatelessWidget {
         "/users": (context) => UserListPage(),
         "/user/add": (context) => UserAddPage(),
         "/apply-leave": (context) => ApplyLeavePage(),
-        "/my-leaves": (context) => LeaveListPage()
+        "/my-leaves": (context) => LeaveListPage(),
+        "/profile": (context) => ProfilePage()
       },
     );
   }

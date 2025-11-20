@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../widgets/dashboard_template.dart';
+import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/attendance/absensi_list_page.dart';
 import 'package:apk_absensi/screens/attendance/absensi_page.dart';
 import 'package:apk_absensi/screens/leave/leave_list_page.dart';
