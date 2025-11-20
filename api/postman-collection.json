@@ -656,6 +656,11 @@
                   "key": "lng",
                   "value": "106.8456",
                   "type": "text"
+                },
+                {
+                  "key": "note",
+                  "value": "Kebanjiran",
+                  "type": "text"
                 }
               ]
             },

@@ -19,7 +19,7 @@ export class AttendanceController {
 
       // Handle form-data request
       const { lat, lng } = req.body as AttendanceFormDataRequest;
-      
+
       if (!lat || !lng) {
         res.status(400).json({
           success: false,
@@ -43,6 +43,7 @@ export class AttendanceController {
         date,
         location,
         selfie: req.file.buffer, // Kirim buffer file langsung
+        note: req.body.note || '',
       });
 
       res.json({
@@ -71,7 +72,7 @@ export class AttendanceController {
 
       // Handle form-data request
       const { lat, lng } = req.body as AttendanceFormDataRequest;
-      
+
       if (!lat || !lng) {
         res.status(400).json({
           success: false,
@@ -213,6 +214,44 @@ export class AttendanceController {
       res.status(400).json({
         success: false,
         message: error.message || 'Failed to record manual attendance',
+      });
+    }
+  }
+
+  async getTodayAttendance(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const attendance = await prisma.attendance.findFirst({
+        where: {
+          userId: req.user.id,
+          date: {
+            gte: today,
+            lt: tomorrow,
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        data: attendance,
+      });
+    } catch (error: any) {
+      console.error('Get today attendance error:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get today attendance',
       });
     }
   }

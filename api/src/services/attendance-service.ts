@@ -13,6 +13,7 @@ export class AttendanceService {
       date: Date;
       location: string;
       selfie: Buffer; // Buffer dari file
+      note: string;
     }
   ): Promise<Attendance> {
     try {
@@ -20,7 +21,7 @@ export class AttendanceService {
       if (!user) {
         throw new Error('User not found');
       }
-
+console.log('Checking in user:', userId, 'location', data.location);
       // GPS Validation
       const [lat, lng] = data.location.split(',').map(coord => parseFloat(coord.trim()));
       const gpsValidation = validateGPSLocation(
@@ -30,7 +31,7 @@ export class AttendanceService {
         parseFloat(process.env.OFFICE_LONGITUDE!),
         parseFloat(process.env.GPS_RADIUS || '100')
       );
-
+console.log('GPS office:', process.env.OFFICE_LATITUDE, process.env.OFFICE_LONGITUDE);
       if (!gpsValidation.isValid) {
         await sendNotification(
           userId,
@@ -111,6 +112,7 @@ export class AttendanceService {
             selfieCheckIn: selfiePath, // Simpan path file
             lateMinutes,
             status,
+            notes: data.note,
           },
         });
       }
@@ -124,6 +126,7 @@ export class AttendanceService {
           selfieCheckIn: selfiePath, // Simpan path file
           lateMinutes,
           status,
+          notes: data.note,
         },
       });
     } catch (error) {
