@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:apk_absensi/screens/auth/login_page.dart';
 import 'package:apk_absensi/screens/users/profile/profile_page.dart';
+import 'package:apk_absensi/screens/settings/settings_page.dart';
+import 'package:apk_absensi/services/profile_service.dart';
 
 Widget buildDashboard({
   required BuildContext context,
   required String title,
   required List<Map<String, dynamic>> menu,
   Color? color,
-  String? Name, // Tetap gunakan Name dengan kapital untuk kompatibilitas
+  String? Name,
   String? userEmail,
   void Function(String title)? onMenuTap,
 }) {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ProfileService _profileService = ProfileService();
 
   return Scaffold(
     key: _scaffoldKey,
@@ -35,10 +38,11 @@ Widget buildDashboard({
     ),
     drawer: _buildDrawer(
       context: context,
-      name: Name, // Tetap kompatibel dengan parameter Name
+      name: Name,
       userEmail: userEmail,
       menu: menu,
       onMenuTap: onMenuTap,
+      profileService: _profileService,
     ),
     body: _buildBody(
       context: context,
@@ -56,63 +60,19 @@ Widget _buildDrawer({
   required String? userEmail,
   required List<Map<String, dynamic>> menu,
   required void Function(String title)? onMenuTap,
+  required ProfileService profileService,
 }) {
   return Drawer(
     child: Container(
       color: Colors.white,
       child: Column(
         children: [
-          // Header Drawer
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.greenAccent[700],
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
-            ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.greenAccent,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name ?? "Nama Pengguna",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        userEmail ?? "email@example.com",
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          // Header Drawer dengan FutureBuilder untuk foto profil
+          _buildDrawerHeader(
+            context: context,
+            name: name,
+            userEmail: userEmail,
+            profileService: profileService,
           ),
 
           // Menu List
@@ -123,10 +83,7 @@ Widget _buildDrawer({
                 // Menu utama dari parameter
                 ...menu.map((item) {
                   return ListTile(
-                    leading: Icon(
-                      item["icon"],
-                      color: Colors.greenAccent[700],
-                    ),
+                    leading: Icon(item["icon"], color: Colors.greenAccent[700]),
                     title: Text(
                       item["title"],
                       style: const TextStyle(fontWeight: FontWeight.w500),
@@ -153,10 +110,7 @@ Widget _buildDrawer({
 
                 // Menu Profil dengan navigasi ke ProfilePage
                 ListTile(
-                  leading: Icon(
-                    Icons.person,
-                    color: Colors.greenAccent[700],
-                  ),
+                  leading: Icon(Icons.person, color: Colors.greenAccent[700]),
                   title: const Text(
                     "Profil",
                     style: TextStyle(fontWeight: FontWeight.w500),
@@ -164,33 +118,26 @@ Widget _buildDrawer({
                   onTap: () {
                     Navigator.of(context).pop(); // Tutup drawer
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ProfilePage(),
-                      ),
+                      MaterialPageRoute(builder: (context) => ProfilePage()),
                     );
                   },
                 ),
 
                 ListTile(
-                  leading: Icon(
-                    Icons.settings,
-                    color: Colors.greenAccent[700],
-                  ),
+                  leading: Icon(Icons.settings, color: Colors.greenAccent[700]),
                   title: const Text(
                     "Pengaturan",
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   onTap: () {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Navigasi ke Pengaturan"),
-                        backgroundColor: Colors.blueAccent,
+                    Navigator.of(context).pop(); // Tutup drawer
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsPage(),
                       ),
                     );
                   },
                 ),
-
                 ListTile(
                   leading: Icon(
                     Icons.help_outline,
@@ -215,10 +162,7 @@ Widget _buildDrawer({
 
                 // Logout
                 ListTile(
-                  leading: const Icon(
-                    Icons.logout,
-                    color: Colors.redAccent,
-                  ),
+                  leading: const Icon(Icons.logout, color: Colors.redAccent),
                   title: const Text(
                     "Logout",
                     style: TextStyle(
@@ -238,6 +182,107 @@ Widget _buildDrawer({
       ),
     ),
   );
+}
+
+Widget _buildDrawerHeader({
+  required BuildContext context,
+  required String? name,
+  required String? userEmail,
+  required ProfileService profileService,
+}) {
+  return FutureBuilder(
+    future: profileService.getProfile(),
+    builder: (context, snapshot) {
+      String displayName = name ?? "Nama Pengguna";
+      String displayEmail = userEmail ?? "email@example.com";
+      String? photoUrl;
+
+      if (snapshot.hasData) {
+        final profile = snapshot.data!;
+        displayName = name ?? profile.name ?? displayName;
+        displayEmail = userEmail ?? profile.email ?? displayEmail;
+        photoUrl = profile.photo;
+      }
+
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.greenAccent[700],
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+        ),
+        child: Row(
+          children: [
+            // CircleAvatar dengan foto profil
+            _buildProfileAvatar(photoUrl, profileService),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    displayEmail,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildProfileAvatar(String? photoUrl, ProfileService profileService) {
+  if (photoUrl != null && photoUrl.isNotEmpty) {
+    final fullPhotoUrl = profileService.getProfilePhotoUrl(photoUrl);
+    
+    return CircleAvatar(
+      radius: 30,
+      backgroundColor: Colors.white,
+      backgroundImage: NetworkImage(fullPhotoUrl),
+      onBackgroundImageError: (exception, stackTrace) {
+        // Fallback ke icon jika gambar error
+        print('Error loading profile image: $exception');
+      },
+      child: photoUrl.isEmpty 
+          ? const Icon(
+              Icons.person,
+              color: Colors.greenAccent,
+              size: 30,
+            )
+          : null,
+    );
+  } else {
+    return const CircleAvatar(
+      radius: 30,
+      backgroundColor: Colors.white,
+      child: Icon(
+        Icons.person,
+        color: Colors.greenAccent,
+        size: 30,
+      ),
+    );
+  }
 }
 
 Widget _buildBody({
@@ -263,11 +308,7 @@ Widget _buildBody({
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(
-                  Icons.dashboard,
-                  color: Colors.greenAccent[700],
-                  size: 30,
-                ),
+                Icon(Icons.dashboard, color: Colors.greenAccent[700], size: 30),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -371,7 +412,8 @@ Widget _buildBody({
 }
 
 Future<void> _showLogoutConfirmation(BuildContext context) async {
-  bool confirm = await showDialog(
+  bool confirm =
+      await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text(
@@ -382,10 +424,7 @@ Future<void> _showLogoutConfirmation(BuildContext context) async {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
-                "Batal",
-                style: TextStyle(color: Colors.grey),
-              ),
+              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
