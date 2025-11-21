@@ -1,68 +1,23 @@
-// pages/help_page.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:apk_absensi/models/faq_model.dart';
+import 'package:apk_absensi/services/help_service.dart';
 
-class HelpPage extends StatelessWidget {
-  HelpPage({super.key});
+class HelpPage extends StatefulWidget {
+  const HelpPage({super.key});
 
-  // Data FAQ
-  final List<FAQ> faqs = [
-    FAQ(
-      question: "Bagaimana cara melakukan absensi?",
-      answer: "Untuk melakukan absensi, buka menu 'Absensi' lalu pilih 'Check In' di pagi hari dan 'Check Out' di sore hari. Pastikan Anda mengupload foto selfie sebagai bukti kehadiran.",
-    ),
-    FAQ(
-      question: "Apa yang harus dilakukan jika lupa melakukan absensi?",
-      answer: "Jika lupa melakukan absensi, segera hubungi HRD atau atasan langsung untuk mengajukan permohonan perbaikan absensi. Lampirkan bukti yang mendukung.",
-    ),
-    FAQ(
-      question: "Bagaimana cara mengajukan cuti?",
-      answer: "Untuk mengajukan cuti, buka menu 'Cuti' lalu pilih 'Ajukan Cuti'. Isi formulir pengajuan cuti dengan lengkap dan tunggu persetujuan dari atasan.",
-    ),
-    FAQ(
-      question: "Kapan gaji biasanya ditransfer?",
-      answer: "Gaji biasanya ditransfer pada tanggal 25 setiap bulan. Jika tanggal 25 jatuh pada hari libur, akan diproses pada hari kerja sebelumnya.",
-    ),
-    FAQ(
-      question: "Bagaimana cara mengubah foto profil?",
-      answer: "Untuk mengubah foto profil, buka menu 'Pengaturan' lalu pilih 'Ubah Foto'. Anda dapat memilih foto dari galeri atau mengambil foto baru.",
-    ),
-    FAQ(
-      question: "Apa yang harus dilakukan jika password lupa?",
-      answer: "Jika lupa password, Anda dapat menggunakan fitur 'Ubah Password' di menu Pengaturan. Masukkan password lama dan buat password baru.",
-    ),
-    FAQ(
-      question: "Bagaimana cara melihat riwayat gaji?",
-      answer: "Riwayat gaji dapat dilihat di menu 'Gaji & Potongan'. Anda dapat melihat detail gaji untuk setiap periode.",
-    ),
-    FAQ(
-      question: "Apa saja fitur yang tersedia untuk karyawan?",
-      answer: "Fitur untuk karyawan meliputi: Absensi, Pengajuan Cuti, Lihat Gaji, Profil, dan Pengaturan. Semua fitur dapat diakses melalui menu dashboard.",
-    ),
-  ];
+  @override
+  State<HelpPage> createState() => _HelpPageState();
+}
 
-  // Data kontak support
-  final List<Map<String, String>> supportContacts = [
-    {
-      'department': 'HRD',
-      'name': 'Budi Santoso',
-      'phone': '081234567890',
-      'email': 'hrd@company.com',
-    },
-    {
-      'department': 'IT Support',
-      'name': 'Ahmad Rizki',
-      'phone': '081234567891',
-      'email': 'it-support@company.com',
-    },
-    {
-      'department': 'Finance',
-      'name': 'Siti Rahma',
-      'phone': '081234567892',
-      'email': 'finance@company.com',
-    },
-  ];
+class _HelpPageState extends State<HelpPage> {
+  final HelpService _helpService = HelpService();
+  late Future<HelpResponse> _helpDataFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _helpDataFuture = _helpService.getHelpData();
+  }
 
   Future<void> _launchPhone(String phone) async {
     final Uri url = Uri.parse('tel:$phone');
@@ -94,24 +49,47 @@ class HelpPage extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: ListView(
+      body: FutureBuilder<HelpResponse>(
+        future: _helpDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildLoadingState();
+          } else if (snapshot.hasError) {
+            return _buildErrorState(snapshot.error.toString());
+          } else if (snapshot.hasData) {
+            return _buildContent(snapshot.data!);
+          } else {
+            return _buildErrorState('Tidak ada data bantuan');
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent(HelpResponse helpData) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {
+          _helpDataFuture = _helpService.getHelpData();
+        });
+      },
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Header Section
           _buildHeaderSection(),
           const SizedBox(height: 24),
-
-          // FAQ Section
-          _buildFaqSection(),
-          const SizedBox(height: 24),
-
-          // Contact Support Section
-          _buildContactSection(),
-          const SizedBox(height: 24),
-
-          // App Info Section
-          _buildAppInfoSection(),
-          const SizedBox(height: 20),
+          if (helpData.faqs.isNotEmpty) ...[
+            _buildFaqSection(helpData.faqs),
+            const SizedBox(height: 24),
+          ],
+          if (helpData.contacts.isNotEmpty) ...[
+            _buildContactSection(helpData.contacts),
+            const SizedBox(height: 24),
+          ],
+          if (helpData.appInfo.isNotEmpty) ...[
+            _buildAppInfoSection(helpData.appInfo),
+            const SizedBox(height: 20),
+          ],
         ],
       ),
     );
@@ -155,7 +133,7 @@ class HelpPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqSection() {
+  Widget _buildFaqSection(List<HelpContent> faqs) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -188,7 +166,7 @@ class HelpPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem(FAQ faq) {
+  Widget _buildFaqItem(HelpContent faq) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -200,7 +178,7 @@ class HelpPage extends StatelessWidget {
           color: Colors.greenAccent[700],
         ),
         title: Text(
-          faq.question,
+          faq.title,
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -210,7 +188,7 @@ class HelpPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Text(
-              faq.answer,
+              faq.content,
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.grey,
@@ -222,7 +200,7 @@ class HelpPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactSection() {
+  Widget _buildContactSection(List<HelpContent> contacts) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,17 +223,19 @@ class HelpPage extends StatelessWidget {
         ListView.separated(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
-          itemCount: supportContacts.length,
+          itemCount: contacts.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            return _buildContactCard(supportContacts[index]);
+            return _buildContactCard(contacts[index]);
           },
         ),
       ],
     );
   }
 
-  Widget _buildContactCard(Map<String, String> contact) {
+  Widget _buildContactCard(HelpContent contact) {
+    final contactInfo = contact.contactInfo;
+    
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -287,36 +267,42 @@ class HelpPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        contact['department']!,
+                        contact.title,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        contact['name']!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
+                      if (contactInfo['name'] != null) ...[
+                        Text(
+                          contactInfo['name'],
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildContactInfo(
-              Icons.phone,
-              contact['phone']!,
-              () => _launchPhone(contact['phone']!),
-            ),
-            const SizedBox(height: 8),
-            _buildContactInfo(
-              Icons.email,
-              contact['email']!,
-              () => _launchEmail(contact['email']!),
-            ),
+            if (contactInfo['phone'] != null) ...[
+              _buildContactInfo(
+                Icons.phone,
+                contactInfo['phone'],
+                () => _launchPhone(contactInfo['phone']),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (contactInfo['email'] != null) ...[
+              _buildContactInfo(
+                Icons.email,
+                contactInfo['email'],
+                () => _launchEmail(contactInfo['email']),
+              ),
+            ],
           ],
         ),
       ),
@@ -349,7 +335,11 @@ class HelpPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAppInfoSection() {
+  Widget _buildAppInfoSection(List<HelpContent> appInfoList) {
+    if (appInfoList.isEmpty) return const SizedBox();
+    
+    final appInfo = appInfoList.first.appInfo;
+    
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -368,10 +358,18 @@ class HelpPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _buildAppInfoItem('Versi Aplikasi', '1.0.0'),
-            _buildAppInfoItem('Dibuat Oleh', 'Tim IT Perusahaan'),
-            _buildAppInfoItem('Update Terakhir', 'November 2024'),
-            _buildAppInfoItem('Platform', 'Android & iOS'),
+            if (appInfo['version'] != null) ...[
+              _buildAppInfoItem('Versi Aplikasi', appInfo['version']),
+            ],
+            if (appInfo['createdBy'] != null) ...[
+              _buildAppInfoItem('Dibuat Oleh', appInfo['createdBy']),
+            ],
+            if (appInfo['lastUpdate'] != null) ...[
+              _buildAppInfoItem('Update Terakhir', appInfo['lastUpdate']),
+            ],
+            if (appInfo['platform'] != null) ...[
+              _buildAppInfoItem('Platform', appInfo['platform']),
+            ],
           ],
         ),
       ),
@@ -397,6 +395,50 @@ class HelpPage extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('Memuat data bantuan...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+          const SizedBox(height: 16),
+          const Text(
+            'Gagal memuat data bantuan',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _helpDataFuture = _helpService.getHelpData();
+              });
+            },
+            child: const Text('Coba Lagi'),
           ),
         ],
       ),

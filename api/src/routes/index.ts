@@ -9,6 +9,7 @@ import notificationRoutes from './notification';
 import salaryRoutes from './salary';
 import divisionSettingRoutes from './division-setting';
 import analysisRoutes from './analysis';
+import helpRoutes from './help';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/salaries', salaryRoutes);
 router.use('/division-settings', divisionSettingRoutes);
 router.use('/analysis', analysisRoutes);
+router.use('/help', helpRoutes);
 
 export default router;

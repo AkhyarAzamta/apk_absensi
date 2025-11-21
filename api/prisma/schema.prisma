@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") // This line will be removed or commented out in Prisma 7
 }
 
 model User {
@@ -29,6 +29,7 @@ model User {
   overtimes   Overtime[]
   notifications Notification[]
   salaries    Salary[]
+  helpContents HelpContent[]
 
   @@map("users")
 }
@@ -193,4 +194,28 @@ model SystemSetting {
   updatedAt DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+model HelpContent {
+  id          Int       @id @default(autoincrement())
+  division    Division? // Nullable untuk konten global
+  title       String
+  content     String
+  type        HelpContentType
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdBy   Int
+  creator     User      @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([division, title, type])
+  @@map("help_contents")
+}
+
+enum HelpContentType {
+  FAQ
+  CONTACT
+  APP_INFO
+  GENERAL
 }

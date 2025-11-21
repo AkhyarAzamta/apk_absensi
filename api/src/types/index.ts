@@ -161,3 +161,50 @@ export interface UpdateProfileRequest {
   currentPassword?: string;
   // Photo akan ditangani sebagai file upload
 }
+
+// src/types/help.ts
+export interface HelpContent {
+  id: number;
+  division?: Division;
+  title: string;
+  content: string;
+  type: HelpContentType;
+  order: number;
+  isActive: boolean;
+  createdBy: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+
+export interface HelpResponse {
+  faqs: HelpContent[];
+  contacts: HelpContent[];
+  appInfo: HelpContent[];
+  general: HelpContent[];
+}
+
+export interface CreateHelpContentRequest {
+  division?: Division | null;
+  title: string;
+  content: string;
+  type: HelpContentType;
+  order?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateHelpContentRequest {
+  division?: Division | null;
+  title?: string;
+  content?: string;
+  type?: HelpContentType;
+  order?: number;
+  isActive?: boolean;
+}
+
+export enum HelpContentType {
+  FAQ = 'FAQ',
+  CONTACT = 'CONTACT',
+  APP_INFO = 'APP_INFO',
+  GENERAL = 'GENERAL'
+}
