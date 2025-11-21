@@ -15,8 +15,7 @@ class DashboardApo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return buildDashboard(
-      context: context, 
+    return DashboardTemplate(
       title: "Dashboard APO",
       menu: menu,
       color: Colors.purple[100],

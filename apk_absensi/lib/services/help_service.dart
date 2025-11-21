@@ -36,6 +36,202 @@ class HelpService {
       throw e;
     }
   }
+
+  Future<List<HelpContent>> getAllHelpContent() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Token tidak ditemukan');
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/help/admin/all'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'];
+          return data.map((e) => HelpContent.fromJson(e)).toList();
+        } else {
+          throw Exception(
+            responseData['message'] ?? 'Gagal memuat data bantuan',
+          );
+        }
+      } else {
+        throw Exception('HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      print('Error getting all help content: $e');
+      throw e;
+    }
+  }
+
+  Future<void> createHelpContent({
+    String? division,
+    required String title,
+    required String content,
+    required String type,
+    int order = 0,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Token tidak ditemukan');
+      }
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/help/admin'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'division': division,
+          'title': title,
+          'content': content,
+          'type': type,
+          'order': order,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] != true) {
+          throw Exception(
+            responseData['message'] ?? 'Gagal membuat konten bantuan',
+          );
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Gagal membuat konten bantuan');
+      }
+    } catch (e) {
+      print('Error creating help content: $e');
+      throw e;
+    }
+  }
+
+  Future<void> updateHelpContent({
+    required int id,
+    String? division,
+    String? title,
+    String? content,
+    String? type,
+    int? order,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Token tidak ditemukan');
+      }
+
+      // Hanya kirim field yang diubah
+      final Map<String, dynamic> updateData = {};
+      if (division != null) updateData['division'] = division;
+      if (title != null) updateData['title'] = title;
+      if (content != null) updateData['content'] = content;
+      if (type != null) updateData['type'] = type;
+      if (order != null) updateData['order'] = order;
+
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/help/admin/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(updateData),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] != true) {
+          throw Exception(
+            responseData['message'] ?? 'Gagal mengupdate konten bantuan',
+          );
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(
+          errorData['message'] ?? 'Gagal mengupdate konten bantuan',
+        );
+      }
+    } catch (e) {
+      print('Error updating help content: $e');
+      throw e;
+    }
+  }
+
+  Future<void> deleteHelpContent(int id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Token tidak ditemukan');
+      }
+
+      final response = await http.delete(
+        Uri.parse('${ApiConfig.baseUrl}/help/admin/$id'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] != true) {
+          throw Exception(
+            responseData['message'] ?? 'Gagal menghapus konten bantuan',
+          );
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(
+          errorData['message'] ?? 'Gagal menghapus konten bantuan',
+        );
+      }
+    } catch (e) {
+      print('Error deleting help content: $e');
+      throw e;
+    }
+  }
+
+  Future<void> toggleHelpContentStatus(int id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Token tidak ditemukan');
+      }
+
+      final response = await http.patch(
+        Uri.parse('${ApiConfig.baseUrl}/help/admin/$id/toggle-status'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] != true) {
+          throw Exception(
+            responseData['message'] ?? 'Gagal mengubah status konten',
+          );
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Gagal mengubah status konten');
+      }
+    } catch (e) {
+      print('Error toggling help content status: $e');
+      throw e;
+    }
+  }
 }
 
 class HelpResponse {

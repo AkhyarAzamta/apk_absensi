@@ -37,22 +37,24 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
 
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/overtime/my-overtime'),
-        headers: {
-          'Authorization': 'Bearer $_token',
-        },
+        headers: {'Authorization': 'Bearer $_token'},
       );
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        
+
         if (responseData['success'] == true) {
           final List<dynamic> overtimesData = responseData['data'];
           setState(() {
-            _overtimes = overtimesData.map((data) => OvertimeRequest.fromJson(data)).toList();
+            _overtimes = overtimesData
+                .map((data) => OvertimeRequest.fromJson(data))
+                .toList();
             _isLoading = false;
           });
         } else {
-          throw Exception(responseData['message'] ?? 'Gagal memuat data lembur');
+          throw Exception(
+            responseData['message'] ?? 'Gagal memuat data lembur',
+          );
         }
       } else {
         throw Exception('HTTP ${response.statusCode}: ${response.body}');
@@ -63,7 +65,7 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
         _hasError = true;
         _isLoading = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal memuat data lembur: $e'),
@@ -86,7 +88,7 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
   Widget _buildStatusBadge(String status) {
     final color = OvertimeData.getStatusColor(status);
     final label = OvertimeData.getStatusLabel(status);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -108,7 +110,7 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
   Widget _buildOvertimeCard(OvertimeRequest overtime) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final timeFormat = DateFormat('HH:mm');
-    
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
@@ -134,7 +136,7 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Durasi lembur
             Row(
               children: [
@@ -142,15 +144,12 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
                 const SizedBox(width: 8),
                 Text(
                   'Durasi: ${overtime.formattedHours}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Alasan lembur
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +166,7 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
                 ),
               ],
             ),
-            
+
             // Catatan persetujuan (jika ada)
             if (overtime.notes != null && overtime.notes!.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -189,17 +188,14 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
                 ],
               ),
             ],
-            
+
             // Footer dengan tanggal pengajuan
             const SizedBox(height: 12),
             Divider(color: Colors.grey[300], height: 1),
             const SizedBox(height: 8),
             Text(
               'Diajukan pada: ${DateFormat('dd/MM/yyyy HH:mm').format(overtime.createdAt!)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -212,27 +208,17 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.timer,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.timer, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           const Text(
             'Belum ada pengajuan lembur',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 8),
           const Text(
             'Ajukan lembur pertama Anda dengan menekan tombol di bawah',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -267,27 +253,19 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red[400],
-          ),
+          Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
           const SizedBox(height: 16),
           const Text(
             'Gagal memuat data',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 8),
           Text(
-            _hasError ? 'Terjadi kesalahan saat memuat data lembur' : 'Token tidak valid',
+            _hasError
+                ? 'Terjadi kesalahan saat memuat data lembur'
+                : 'Token tidak valid',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -305,10 +283,7 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
       appBar: AppBar(
         title: const Text(
           'Lembur Saya',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.orangeAccent,
         foregroundColor: Colors.white,
@@ -330,19 +305,19 @@ class _OvertimeListPageState extends State<OvertimeListPage> {
       body: _isLoading
           ? _buildLoadingState()
           : _hasError
-              ? _buildErrorState()
-              : _overtimes.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      onRefresh: _loadOvertimes,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _overtimes.length,
-                        itemBuilder: (context, index) {
-                          return _buildOvertimeCard(_overtimes[index]);
-                        },
-                      ),
-                    ),
+          ? _buildErrorState()
+          : _overtimes.isEmpty
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadOvertimes,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _overtimes.length,
+                itemBuilder: (context, index) {
+                  return _buildOvertimeCard(_overtimes[index]);
+                },
+              ),
+            ),
     );
   }
 }

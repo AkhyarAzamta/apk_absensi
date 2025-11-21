@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/attendance/absensi_list_page.dart';
 import 'package:apk_absensi/screens/attendance/absensi_page.dart';
 import 'package:apk_absensi/screens/leave/leave_list_page.dart';
 import 'package:apk_absensi/screens/overtime/overtime_list_page.dart';
-import 'package:apk_absensi/screens/salary/salary_list_page.dart'; // Import halaman gaji
+import 'package:apk_absensi/screens/salary/salary_list_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardUser extends StatefulWidget {
   @override
@@ -20,29 +20,6 @@ class _DashboardUserState extends State<DashboardUser> {
     {"title": "Riwayat Absensi", "icon": Icons.history},
     {"title": "Gaji & Potongan", "icon": Icons.money},
   ];
-
-  String? Name = "";
-  String? userEmail = "";
-  String? userToken = "";
-
-  @override
-  void initState() {
-    super.initState();
-    loadUserData();
-  }
-
-  Future<void> loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      Name = prefs.getString("user_name") ?? "Karyawan";
-      userEmail = prefs.getString("user_email") ?? "email@example.com";
-      userToken = prefs.getString("token") ?? "";
-    });
-    
-    final allKeys = prefs.getKeys();
-    print('All SharedPreferences keys: $allKeys');
-  }
 
   Future<void> handleMenuClick(String title) async {
     if (title == "Riwayat Absensi") {
@@ -70,7 +47,7 @@ class _DashboardUserState extends State<DashboardUser> {
         context,
         MaterialPageRoute(
           builder: (_) => AbsensiPage(
-            userName: Name ?? "Karyawan",
+            userName: "Karyawan",
             token: currentToken,
           ),
         ),
@@ -86,7 +63,6 @@ class _DashboardUserState extends State<DashboardUser> {
         MaterialPageRoute(builder: (_) => OvertimeListPage()),
       );
     } else if (title == "Gaji & Potongan") {
-      // ✅ Navigasi ke halaman gaji & potongan
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => SalaryListPage()),
@@ -100,13 +76,10 @@ class _DashboardUserState extends State<DashboardUser> {
 
   @override
   Widget build(BuildContext context) {
-    return buildDashboard(
-      context: context,
+    return DashboardTemplate(
       title: "Karyawan",
       menu: menu,
       color: Colors.grey[100],
-      Name: Name,
-      userEmail: userEmail,
       onMenuTap: handleMenuClick,
     );
   }

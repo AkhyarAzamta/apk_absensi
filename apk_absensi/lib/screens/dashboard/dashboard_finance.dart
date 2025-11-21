@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/dashboard_template.dart';
+import 'package:apk_absensi/widgets/dashboard_template.dart';
 
 class DashboardFinance extends StatelessWidget {
   final List<Map<String, dynamic>> menu = [
@@ -13,13 +13,18 @@ class DashboardFinance extends StatelessWidget {
     {"title": "Jam Kerja", "icon": Icons.schedule},
   ];
 
+  void handleMenuTap(String title) {
+    // Implementasi menu tap untuk finance
+    print('Menu tapped: $title');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return buildDashboard(
-      context: context,
+    return DashboardTemplate(
       title: "Dashboard Finance",
       menu: menu,
       color: Colors.purple[100],
+      onMenuTap: handleMenuTap,
     );
   }
 }

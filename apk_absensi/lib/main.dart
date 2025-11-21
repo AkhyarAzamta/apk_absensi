@@ -1,3 +1,4 @@
+// main.dart
 import 'package:apk_absensi/screens/leave/leave_list_page.dart';
 import 'package:apk_absensi/screens/users/profile/profile_page.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import 'screens/leave/apply_leave_page.dart';
 import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
 
+// PERBAIKAN: Pastikan navigatorKey didefinisikan sebagai global
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 // ⬇️ Buat videoElement GLOBAL agar bisa diakses di halaman lain
@@ -36,8 +38,7 @@ void main() {
     final iframe = html.IFrameElement()
       ..src = 'assets/face_detect.html'
       ..style.border = 'none'
-      ..style.width =
-          '320px' // gunakan style
+      ..style.width = '320px'
       ..style.height = '240px';
     return iframe;
   });
@@ -45,10 +46,12 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey,
+      navigatorKey: navigatorKey, // PASTIKAN INI ADA
       debugShowCheckedModeBanner: false,
       home: SplashChecker(),
       routes: {
@@ -58,12 +61,12 @@ class MyApp extends StatelessWidget {
         "/dashboard_apo": (_) => DashboardApo(),
         "/dashboard_frontdesk": (_) => DashboardFrontdesk(),
         "/dashboard_onsite": (_) => DashboardOnsite(),
-        // crud usrs
+        // crud users
         "/users": (context) => UserListPage(),
         "/user/add": (context) => UserAddPage(),
         "/apply-leave": (context) => ApplyLeavePage(),
         "/my-leaves": (context) => LeaveListPage(),
-        "/profile": (context) => ProfilePage()
+        "/profile": (context) => ProfilePage(),
       },
     );
   }

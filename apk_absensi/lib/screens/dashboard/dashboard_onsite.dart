@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../config/api.dart';
-import '../onsite/jam_kerja_page.dart';
-import '../onsite/validasi_gps_page.dart';
-import '../onsite/potongan_page.dart';
-import '../attendance/absensi_list_page.dart';
-import '../../widgets/dashboard_template.dart';
+import 'package:apk_absensi/widgets/dashboard_template.dart';
+import 'package:apk_absensi/screens/onsite/jam_kerja_page.dart';
+import 'package:apk_absensi/screens/onsite/validasi_gps_page.dart';
+import 'package:apk_absensi/screens/onsite/potongan_page.dart';
+import 'package:apk_absensi/screens/attendance/absensi_list_page.dart';
 
 class DashboardOnsite extends StatefulWidget {
   @override
@@ -16,9 +14,6 @@ class DashboardOnsite extends StatefulWidget {
 }
 
 class _DashboardOnsiteState extends State<DashboardOnsite> {
-  String? userName = "Nama Pengguna";
-  String? userEmail = "email@example.com";
-
   final List<Map<String, dynamic>> menu = [
     {"title": "Absensi Onsite", "icon": Icons.location_on},
     {"title": "Validasi GPS", "icon": Icons.map},
@@ -30,36 +25,28 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
     {"title": "Jam Kerja", "icon": Icons.access_time_filled},
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    loadUserData();
-  }
-
-  Future<void> loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString("user_name") ?? "Nama Pengguna";
-      userEmail = prefs.getString("user_email") ?? "email@example.com";
-    });
-  }
-
-  // Ambil data API sebelum pindah halaman
+  // Method untuk fetch division settings
   Future<Map<String, dynamic>?> fetchDivisionSettings() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString("token");
-      int divisionId = prefs.getInt("division_id") ?? 1;
+      // Untuk demo, kita gunakan division id 1
+      int divisionId = 1;
 
       final response = await http.get(
         Uri.parse(
-          "${ApiConfig.baseUrl}/division-settings/by-division/$divisionId",
+          "http://localhost:3000/api/division-settings/by-division/$divisionId",
         ),
         headers: {"Authorization": "Bearer $token"},
       );
 
-      return json.decode(response.body);
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return null;
+      }
     } catch (e) {
+      print('Error fetching division settings: $e');
       return null;
     }
   }
@@ -78,42 +65,38 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
       case "Jam Kerja":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => JamKerjaPage(data!)),
+          MaterialPageRoute(builder: (_) => JamKerjaPage(data: data)),
         );
         break;
 
       case "Validasi GPS":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => ValidasiGpsPage(data!)),
+          MaterialPageRoute(builder: (_) => ValidasiGpsPage(data: data)),
         );
         break;
 
       case "Potongan":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => PotonganPage(data!)),
+          MaterialPageRoute(builder: (_) => PotonganPage(data: data)),
         );
         break;
 
       default:
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Menu '$title' belum tersedia")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Menu '$title' belum tersedia"))
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return buildDashboard(
-      context: context,
+    return DashboardTemplate(
       title: "Onsite",
       menu: menu,
-      Name: userName,
-      userEmail: userEmail,
       color: Colors.purple[100],
       onMenuTap: handleMenuTap,
     );
   }
-  
 }

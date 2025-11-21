@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../widgets/dashboard_template.dart';
+import 'package:apk_absensi/widgets/dashboard_template.dart';
 
-class DashboardFrontdesk extends StatefulWidget {
-  @override
-  _DashboardFrontdesk createState() => _DashboardFrontdesk();
-}
-
-class _DashboardFrontdesk extends State<DashboardFrontdesk> {
-  String? userName = "Nama Pengguna";
-  String? userEmail = "email@example.com";
+class DashboardFrontdesk extends StatelessWidget {
   final List<Map<String, dynamic>> menu = [
-    {"title": "Data Karyawan", "icon": Icons.people_outline, "route": "/users"},
+    {"title": "Data Karyawan", "icon": Icons.people_outline},
     {"title": "Absensi", "icon": Icons.check},
     {"title": "Cuti & Lembur", "icon": Icons.badge},
     {"title": "Laporan", "icon": Icons.insert_chart},
@@ -20,27 +12,18 @@ class _DashboardFrontdesk extends State<DashboardFrontdesk> {
     {"title": "Pengaturan Jam Kerja", "icon": Icons.timer_outlined},
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    loadUserData();
-  }
-
-  Future<void> loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString("user_name") ?? "Nama Pengguna";
-      userEmail = prefs.getString("user_email") ?? "email@example.com";
-    });
+  void handleMenuTap(String title) {
+    // Implementasi menu tap untuk frontdesk
+    print('Menu tapped: $title');
   }
 
   @override
   Widget build(BuildContext context) {
-    return buildDashboard(
-      context: context,
+    return DashboardTemplate(
       title: "Dashboard Frontdesk",
       menu: menu,
       color: Colors.purple[100],
+      onMenuTap: handleMenuTap,
     );
   }
 }
