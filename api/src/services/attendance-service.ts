@@ -1,4 +1,4 @@
-import { PrismaClient, Attendance, AttendanceStatus } from '@prisma/client';
+import { PrismaClient, Attendance, AttendanceStatus, Division } from '@prisma/client';
 import { validateGPSLocation } from '../utils/gps';
 import { verifyFace } from '../utils/face-recognition';
 import { sendNotification } from '../utils/notification';
@@ -298,4 +298,29 @@ console.log('GPS office:', process.env.OFFICE_LATITUDE, process.env.OFFICE_LONGI
       totalOvertime: Math.round(totalOvertime * 100) / 100,
     };
   }
+
+async getAttendanceHistoryByDivision(
+  division: string,
+  startDate: Date,
+  endDate: Date
+): Promise<Attendance[]> {
+
+  return prisma.attendance.findMany({
+    where: {
+      user: { 
+        division: division as Division 
+      },
+      date: {
+        gte: startDate,
+        lte: endDate
+      }
+    },
+    orderBy: {
+      date: 'desc'
+    },
+    include: {
+      user: true
+    }
+  });
+}
 }

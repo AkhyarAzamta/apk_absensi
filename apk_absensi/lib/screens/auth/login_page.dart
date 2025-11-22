@@ -1,8 +1,9 @@
+// lib/screens/auth/login_page.dart (PERBAIKAN)
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:apk_absensi/config/api.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:apk_absensi/utils/storage.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -14,33 +15,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passC = TextEditingController();
   bool loading = false;
   bool _obscureText = true;
-
-  // Mapping untuk role dan division
-  int _mapRoleToId(String role) {
-    switch (role) {
-      case 'SUPER_ADMIN':
-        return 1;
-      case 'USER':
-        return 2;
-      default:
-        return 2;
-    }
-  }
-
-  int _mapDivisionToId(String division) {
-    switch (division) {
-      case 'FINANCE':
-        return 1;
-      case 'APO':
-        return 2;
-      case 'FRONT_DESK':
-        return 3;
-      case 'ONSITE':
-        return 4;
-      default:
-        return 0;
-    }
-  }
 
   Future<void> login() async {
     if (emailC.text.isEmpty || passC.text.isEmpty) {
@@ -55,16 +29,22 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final url = Uri.parse("${ApiConfig.baseUrl}/auth/login");
 
-      print('Mengirim login request ke: $url');
-      print('Email: ${emailC.text.trim()}');
+      print('📤 Mengirim login request ke: $url');
+      print('📧 Email: ${emailC.text.trim()}');
 
       final response = await http.post(
         url,
-        body: {"email": emailC.text.trim(), "password": passC.text.trim()},
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          "email": emailC.text.trim(),
+          "password": passC.text.trim()
+        }),
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
 
       if (!mounted) return;
       setState(() => loading = false);
@@ -72,71 +52,45 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
 
-        // Debug: print structure of response
-        print('Response keys: ${responseData.keys}');
+        print('🔍 Response keys: ${responseData.keys}');
 
         if (responseData['success'] == true) {
           final data = responseData['data'];
-          print('Data keys: ${data.keys}');
+          print('📊 Data keys: ${data.keys}');
 
           final user = data['user'];
-          print('User data: $user');
+          print('👤 User data: $user');
 
-          // ✅ PERBAIKAN: Ambil token dari data, bukan langsung dari response
-          String? token = data["token"];
+          // ✅ PERBAIKAN: Ambil token dengan cara yang benar
+          String? token = data["token"] ?? data["access_token"];
+          
           if (token == null) {
-            // Coba alternatif key names
-            token = data["access_token"] ?? data["auth_token"];
+            throw Exception('❌ Token tidak ditemukan dalam response');
           }
 
-          if (token == null) {
-            throw Exception('Token tidak ditemukan dalam response');
-          }
+          print('🔐 Token yang didapat: ${token.substring(0, 20)}...');
 
-          print('Token yang disimpan: ${token.substring(0, 20)}...');
+          // ✅ PERBAIKAN: Simpan menggunakan Storage utility
+          await Storage.setToken(token);
+          await Storage.setUserData({
+            'id': user['id'],
+            'name': user['name'],
+            'email': user['email'],
+            'employeeId': user['employeeId'],
+            'position': user['position'],
+            'division': user['division'],
+            'role': user['role'],
+            'photo': user['photo'],
+          });
 
-          SharedPreferences prefs = await SharedPreferences.getInstance();
+          // ✅ DEBUG: Print semua data storage
+          await Storage.debugPrintAll();
 
-          await prefs.setString("token", token);
+          print('✅ Login berhasil - Role: ${user["role"]}, Division: ${user["division"]}');
 
-          // ✅ PERBAIKAN: Gunakan mapping untuk role dan division
-          int roleId = _mapRoleToId(user["role"]);
-          int divId = _mapDivisionToId(user["division"]);
-
-          await prefs.setInt("role_id", roleId);
-          await prefs.setInt("division_id", divId);
-          await prefs.setInt("user_id", user["id"]);
-          await prefs.setString("user_name", user["name"]);
-          await prefs.setString("user_email", user["email"]);
-          await prefs.setString("employee_id", user["employeeId"] ?? "");
-          await prefs.setString("position", user["position"] ?? "");
-          await prefs.setString("division", user["division"] ?? "");
-
-          print('Login berhasil - Role: $roleId, Division: $divId');
-
-          // Navigasi berdasarkan role dan division
-          if (roleId == 1) {
-            // SUPER_ADMIN
-            switch (roleId) {
-              case 1: // FINANCE
-                Navigator.pushReplacementNamed(context, "/dashboard_finance");
-                break;
-              case 2: // APO
-                Navigator.pushReplacementNamed(context, "/dashboard_apo");
-                break;
-              case 3: // FRONT_DESK
-                Navigator.pushReplacementNamed(context, "/dashboard_frontdesk");
-                break;
-              case 4: // ONSITE
-                Navigator.pushReplacementNamed(context, "/dashboard_onsite");
-                break;
-              default:
-                Navigator.pushReplacementNamed(context, "/dashboard_user");
-            }
-          } else {
-            // USER atau role lainnya
-            Navigator.pushReplacementNamed(context, "/dashboard_user");
-          }
+          // ✅ PERBAIKAN: Navigasi berdasarkan role dan division
+          _navigateBasedOnRole(user["role"], user["division"]);
+          
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseData["message"] ?? "Login gagal!")),
@@ -147,16 +101,47 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorData["message"] ?? "Email atau password salah!"),
+            backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => loading = false);
-      print('Error during login: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      print('❌ Error during login: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // ✅ PERBAIKAN: Method navigasi yang benar
+  void _navigateBasedOnRole(String role, String division) {
+    print('🧭 Navigasi - Role: $role, Division: $division');
+    
+    if (role.contains('SUPER_ADMIN')) {
+      switch (division) {
+        case 'FINANCE':
+          Navigator.pushReplacementNamed(context, "/dashboard_finance");
+          break;
+        case 'APO':
+          Navigator.pushReplacementNamed(context, "/dashboard_apo");
+          break;
+        case 'FRONT_DESK':
+          Navigator.pushReplacementNamed(context, "/dashboard_frontdesk");
+          break;
+        case 'ONSITE':
+          Navigator.pushReplacementNamed(context, "/dashboard_onsite");
+          break;
+        default:
+          Navigator.pushReplacementNamed(context, "/dashboard_user");
+      }
+    } else {
+      // USER atau role lainnya
+      Navigator.pushReplacementNamed(context, "/dashboard_user");
     }
   }
 

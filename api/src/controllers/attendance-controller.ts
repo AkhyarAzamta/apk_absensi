@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest, AttendanceFormDataRequest } from '../types';
 import { AttendanceService } from '../services/attendance-service';
-import { PrismaClient } from '@prisma/client';
+import { Division, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const attendanceService = new AttendanceService();
@@ -133,7 +133,7 @@ export class AttendanceController {
         start,
         end
       );
-
+      console.log(attendances)
       res.json({
         success: true,
         data: attendances,
@@ -192,6 +192,22 @@ export class AttendanceController {
       }
 
       const { userId, date, checkIn, checkOut, reason } = req.body;
+
+      const user = await prisma.user.findFirst({
+        where: {
+          id: req.user.id
+        },
+        select: {
+          division: true
+        }
+      })
+      if (!req.user || req.user.division === user?.division ) {
+        res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions',
+        });
+        return;
+      }
 
       const attendance = await prisma.attendance.create({
         data: {
@@ -252,6 +268,49 @@ export class AttendanceController {
       res.status(400).json({
         success: false,
         message: error.message || 'Failed to get today attendance',
+      });
+    }
+  }
+
+  async getAttendanceHistoryByDivision(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+      }
+
+      const { startDate, endDate } = req.query;
+
+      let start: Date;
+      let end: Date;
+
+      if (startDate && endDate) {
+        start = new Date(startDate as string);
+        end = new Date(endDate as string);
+      } else {
+        // Default: 30 hari ke belakang
+        end = new Date();
+        start = new Date();
+        start.setDate(start.getDate() - 30);
+      }
+
+      const attendances = await attendanceService.getAttendanceHistoryByDivision(
+        req.user!.division,
+        start,
+        end
+      );
+
+      res.json({
+        success: true,
+        data: attendances,
+      });
+    } catch (error: any) {
+      console.error("Get attendance history error:", error);
+      res.status(400).json({
+        success: false,
+        message: error.message || "Failed to get attendance history",
       });
     }
   }

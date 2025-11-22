@@ -44,6 +44,10 @@ enum Division {
 enum Role {
   USER
   SUPER_ADMIN
+  SUPER_ADMIN_FINANCE
+  SUPER_ADMIN_APO 
+  SUPER_ADMIN_FRONT_DESK
+  SUPER_ADMIN_ONSITE
 }
 
 model Attendance {
@@ -218,4 +222,33 @@ enum HelpContentType {
   CONTACT
   APP_INFO
   GENERAL
+}
+
+model OnsiteLocation {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // Tambahkan ini
+  address     String
+  latitude    Float
+  longitude   Float
+  radius      Int      @default(100)
+  division    Division
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("onsite_locations")
+}
+
+model WorkShift {
+  id          Int      @id @default(autoincrement())
+  name        String
+  startTime   String
+  endTime     String
+  division    Division
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, division]) // Tambahkan ini
+  @@map("work_shifts")
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
+import 'package:apk_absensi/screens/admin/users/user_list_screen.dart';
 
 class DashboardFrontdesk extends StatelessWidget {
   final List<Map<String, dynamic>> menu = [
@@ -12,18 +13,27 @@ class DashboardFrontdesk extends StatelessWidget {
     {"title": "Pengaturan Jam Kerja", "icon": Icons.timer_outlined},
   ];
 
-  void handleMenuTap(String title) {
-    // Implementasi menu tap untuk frontdesk
-    print('Menu tapped: $title');
+  void handleMenuTap(String title, BuildContext context) {
+    switch (title) {
+      case "Data Karyawan":
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserListScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
+      // ... case lainnya
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return DashboardTemplate(
-      title: "Dashboard Frontdesk",
+      title: "Dashboard Finance",
       menu: menu,
       color: Colors.purple[100],
-      onMenuTap: handleMenuTap,
+      onMenuTap: (title) => handleMenuTap(title, context),
     );
   }
 }

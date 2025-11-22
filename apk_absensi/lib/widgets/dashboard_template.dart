@@ -1,4 +1,7 @@
-// widgets/dashboard_template.dart
+// widgets/dashboard_template.dart (FIXED VERSION)
+import 'package:apk_absensi/config/api.dart';
+import 'package:apk_absensi/utils/photo_url_helper.dart';
+import 'package:apk_absensi/utils/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:apk_absensi/screens/auth/login_page.dart';
@@ -6,7 +9,6 @@ import 'package:apk_absensi/screens/users/profile/profile_page.dart';
 import 'package:apk_absensi/screens/settings/settings_page.dart';
 import 'package:apk_absensi/screens/help/help_page.dart';
 import 'package:apk_absensi/screens/admin/admin_help_page.dart';
-import 'package:apk_absensi/services/profile_service.dart';
 
 // Import navigatorKey dari main.dart
 import '../main.dart';
@@ -35,11 +37,12 @@ class DashboardTemplate extends StatefulWidget {
 
 class _DashboardTemplateState extends State<DashboardTemplate> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final ProfileService _profileService = ProfileService();
-  
+
   String? _name;
   String? _userEmail;
-  String? _userToken;
+  String? _division;
+  String? _role;
+  String? _photoUrl;
 
   @override
   void initState() {
@@ -47,18 +50,26 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
     _loadUserData();
   }
 
-  // REUSABLE METHOD: Load user data dari SharedPreferences
+  // ✅ PERBAIKAN: Load user data dari Storage utility
   Future<void> _loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    try {
+      _name = await Storage.getUserName();
+      _userEmail = await Storage.getUserEmail();
+      _division = await Storage.getDivision();
+      _role = await Storage.getRole();
+      _photoUrl = await Storage.getPhoto();
 
-    setState(() {
-      _name = prefs.getString("user_name") ?? "Karyawan";
-      _userEmail = prefs.getString("user_email") ?? "email@example.com";
-      _userToken = prefs.getString("token") ?? "";
-    });
-    
-    final allKeys = prefs.getKeys();
-    print('All SharedPreferences keys: $allKeys');
+      print('👤 User data loaded:');
+      print('   Name: $_name');
+      print('   Email: $_userEmail');
+      print('   Division: $_division');
+      print('   Role: $_role');
+      print('   Photo: $_photoUrl');
+
+      setState(() {});
+    } catch (e) {
+      print('❌ Error loading user data: $e');
+    }
   }
 
   @override
@@ -88,162 +99,158 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
   }
 
   Widget _buildDrawer(BuildContext context) {
+    // ✅ PERBAIKAN: Gunakan data langsung dari Storage, tanpa FutureBuilder
+    String displayName = _name ?? widget.name ?? "Nama Pengguna";
+    String displayEmail = _userEmail ?? widget.userEmail ?? "email@example.com";
+    String userRole = _role ?? "USER";
+
     return Drawer(
       child: Container(
         color: Colors.white,
-        child: FutureBuilder(
-          future: _profileService.getProfile(),
-          builder: (context, snapshot) {
-            // Handle null safety dengan benar
-            String displayName = _name ?? widget.name ?? "Nama Pengguna";
-            String displayEmail = _userEmail ?? widget.userEmail ?? "email@example.com";
-            String? photoUrl;
-            String userRole = "USER";
+        child: Column(
+          children: [
+            // Header Drawer
+            _buildDrawerHeader(
+              name: displayName,
+              userEmail: displayEmail,
+              photoUrl: PhotoUrlHelper.generatePhotoUrl(_photoUrl),
+            ),
 
-            if (snapshot.hasData && snapshot.data != null) {
-              final profile = snapshot.data!;
-              displayName = _name ?? widget.name ?? profile.name ?? "Nama Pengguna";
-              displayEmail = _userEmail ?? widget.userEmail ?? profile.email ?? "email@example.com";
-              photoUrl = profile.photo;
-              userRole = profile.role ?? "USER";
-            }
-
-            return Column(
-              children: [
-                // Header Drawer
-                _buildDrawerHeader(
-                  name: displayName,
-                  userEmail: displayEmail,
-                  photoUrl: photoUrl,
-                ),
-
-                // Menu List
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      // Menu utama dari parameter
-                      ...widget.menu.map((item) {
-                        return ListTile(
-                          leading: Icon(item["icon"], color: Colors.greenAccent[700]),
-                          title: Text(
-                            item["title"] ?? "Menu",
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            if (widget.onMenuTap != null) {
-                              widget.onMenuTap!(item["title"] ?? "Menu");
-                            } else if (item.containsKey("route")) {
-                              Navigator.of(context).pushNamed(item["route"]);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Menu ${item["title"]} diklik"),
-                                  backgroundColor: Colors.greenAccent[700],
-                                ),
-                              );
-                            }
-                          },
-                        );
-                      }).toList(),
-
-                      const Divider(thickness: 1),
-
-                      // Menu Profil
-                      ListTile(
-                        leading: Icon(Icons.person, color: Colors.greenAccent[700]),
-                        title: const Text(
-                          "Profil",
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => const ProfilePage()),
-                          );
-                        },
+            // Menu List
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  // Menu utama dari parameter
+                  ...widget.menu.map((item) {
+                    return ListTile(
+                      leading: Icon(
+                        item["icon"],
+                        color: Colors.greenAccent[700],
                       ),
-
-                      ListTile(
-                        leading: Icon(Icons.settings, color: Colors.greenAccent[700]),
-                        title: const Text(
-                          "Pengaturan",
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SettingsPage(),
+                      title: Text(
+                        item["title"] ?? "Menu",
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        if (widget.onMenuTap != null) {
+                          widget.onMenuTap!(item["title"] ?? "Menu");
+                        } else if (item.containsKey("route")) {
+                          Navigator.of(context).pushNamed(item["route"]);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Menu ${item["title"]} diklik"),
+                              backgroundColor: Colors.greenAccent[700],
                             ),
                           );
-                        },
-                      ),
+                        }
+                      },
+                    );
+                  }).toList(),
 
-                      ListTile(
-                        leading: Icon(
-                          Icons.help_outline,
-                          color: Colors.greenAccent[700],
-                        ),
-                        title: const Text(
-                          "Bantuan",
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => const HelpPage()),
-                          );
-                        },
-                      ),
+                  const Divider(thickness: 1),
 
-                      // Menu Admin Help hanya untuk SUPER_ADMIN
-                      if (userRole == 'SUPER_ADMIN') ...[
-                        const Divider(thickness: 1),
-                        ListTile(
-                          leading: Icon(
-                            Icons.admin_panel_settings,
-                            color: Colors.greenAccent[700],
-                          ),
-                          title: const Text(
-                            "Admin Help",
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => AdminHelpPage(),
-                              ),
-                            );
-                          },
+                  // Menu Profil
+                  ListTile(
+                    leading: Icon(Icons.person, color: Colors.greenAccent[700]),
+                    title: const Text(
+                      "Profil",
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilePage(),
                         ),
-                      ],
-
-                      const Divider(thickness: 1),
-
-                      // Logout - PERBAIKAN: Gunakan context yang valid
-                      ListTile(
-                        leading: const Icon(Icons.logout, color: Colors.redAccent),
-                        title: const Text(
-                          "Logout",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).pop(); // Tutup drawer dulu
-                          _showLogoutConfirmation(context);
-                        },
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                ),
-              ],
-            );
-          },
+
+                  ListTile(
+                    leading: Icon(
+                      Icons.settings,
+                      color: Colors.greenAccent[700],
+                    ),
+                    title: const Text(
+                      "Pengaturan",
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  ListTile(
+                    leading: Icon(
+                      Icons.help_outline,
+                      color: Colors.greenAccent[700],
+                    ),
+                    title: const Text(
+                      "Bantuan",
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const HelpPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // Menu Admin Help hanya untuk SUPER_ADMIN
+                  if (userRole.contains('SUPER_ADMIN')) ...[
+                    const Divider(thickness: 1),
+                    ListTile(
+                      leading: Icon(
+                        Icons.admin_panel_settings,
+                        color: Colors.greenAccent[700],
+                      ),
+                      title: const Text(
+                        "Admin Help",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => AdminHelpPage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+
+                  const Divider(thickness: 1),
+
+                  // Logout
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.redAccent),
+                    title: const Text(
+                      "Logout",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop(); // Tutup drawer dulu
+                      _showLogoutConfirmation(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -251,9 +258,8 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
 
   // PERBAIKAN: Method logout yang aman
   Future<void> _showLogoutConfirmation(BuildContext context) async {
-    // Simpan context lokal sebelum operasi async
     final BuildContext currentContext = context;
-    
+
     final confirmed = await showDialog<bool>(
       context: currentContext,
       builder: (BuildContext dialogContext) {
@@ -292,8 +298,7 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
   // PERBAIKAN: Pisahkan logic logout
   Future<void> _performLogout() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await Storage.clearAll();
 
       // Gunakan navigatorKey global untuk navigasi yang aman
       if (navigatorKey.currentContext != null) {
@@ -328,7 +333,6 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
     }
   }
 
-  // ... (method _buildDrawerHeader, _buildProfileAvatar, _buildBody tetap sama)
   Widget _buildDrawerHeader({
     required String name,
     required String userEmail,
@@ -364,10 +368,7 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
                 const SizedBox(height: 4),
                 Text(
                   userEmail,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -380,35 +381,36 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
   }
 
   Widget _buildProfileAvatar(String? photoUrl) {
+    // Build full URL
+    String? fullUrl;
+
     if (photoUrl != null && photoUrl.isNotEmpty) {
-      final fullPhotoUrl = _profileService.getProfilePhotoUrl(photoUrl);
-      
+      String baseUrl = ApiConfig.baseUrl;
+      if (baseUrl.contains('/api')) {
+        baseUrl = baseUrl.replaceAll('/api', '');
+      }
+
+      fullUrl = photoUrl.startsWith('http') ? photoUrl : baseUrl + photoUrl;
+    }
+
+    // Jika foto ada
+    if (fullUrl != null && fullUrl.trim().isNotEmpty) {
+      print("📸 Loading avatar: $fullUrl");
       return CircleAvatar(
         radius: 30,
-        backgroundColor: Colors.white,
-        backgroundImage: NetworkImage(fullPhotoUrl),
-        onBackgroundImageError: (exception, stackTrace) {
-          print('Error loading profile image: $exception');
+        backgroundImage: NetworkImage(fullUrl),
+        onBackgroundImageError: (e, stack) {
+          print('❌ Avatar load error: $e');
         },
-        child: photoUrl.isEmpty 
-            ? const Icon(
-                Icons.person,
-                color: Colors.greenAccent,
-                size: 30,
-              )
-            : null,
-      );
-    } else {
-      return const CircleAvatar(
-        radius: 30,
-        backgroundColor: Colors.white,
-        child: Icon(
-          Icons.person,
-          color: Colors.greenAccent,
-          size: 30,
-        ),
       );
     }
+
+    // Default avatar
+    return const CircleAvatar(
+      radius: 30,
+      backgroundColor: Colors.white,
+      child: Icon(Icons.person, color: Colors.greenAccent, size: 30),
+    );
   }
 
   Widget _buildBody(BuildContext context) {
@@ -428,7 +430,11 @@ class _DashboardTemplateState extends State<DashboardTemplate> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(Icons.dashboard, color: Colors.greenAccent[700], size: 30),
+                  Icon(
+                    Icons.dashboard,
+                    color: Colors.greenAccent[700],
+                    size: 30,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

@@ -156,7 +156,7 @@ export class LeaveController {
       }
 
       const leaves = await prisma.leave.findMany({
-        where: { status: 'PENDING' },
+        where: { status: 'PENDING', user: { division: req.user.division } },
         include: {
           user: {
             select: {

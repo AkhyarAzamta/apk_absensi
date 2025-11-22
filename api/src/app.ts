@@ -16,7 +16,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
-app.use('/public/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // Routes
 app.use('/api', routes);

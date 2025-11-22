@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { User, Division, Role } from '@prisma/client';
+import { User, Division } from '@prisma/client';
 
 export interface AuthRequest extends Request {
   user?: User;
@@ -207,4 +207,13 @@ export enum HelpContentType {
   CONTACT = 'CONTACT',
   APP_INFO = 'APP_INFO',
   GENERAL = 'GENERAL'
+}
+
+enum Role {
+  USER = 'USER',
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  SUPER_ADMIN_FINANCE = 'SUPER_ADMIN_FINANCE',
+  SUPER_ADMIN_APO = 'SUPER_ADMIN_APO',
+  SUPER_ADMIN_FRONT_DESK = 'SUPER_ADMIN_FRONT_DESK',
+  SUPER_ADMIN_ONSITE = 'SUPER_ADMIN_ONSITE'
 }

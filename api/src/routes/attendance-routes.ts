@@ -24,6 +24,7 @@ router.post('/checkout',
 
 router.get('/today', authenticate, attendanceController.getTodayAttendance);
 router.get('/history', authenticate, attendanceController.getAttendanceHistory);
+router.get('/history-by-division', authenticate, attendanceController.getAttendanceHistoryByDivision);
 router.get('/summary', authenticate, attendanceController.getAttendanceSummary);
 router.post('/manual', authenticate, authorize('SUPER_ADMIN'), attendanceController.manualAttendance);
 

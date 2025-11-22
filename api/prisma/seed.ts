@@ -9,6 +9,7 @@ import {
   seedSalaries,
   seedNotifications,
   seedHelpContent,
+  seedOnsiteLocations, // Import yang baru
 } from './seeders';
 
 const prisma = new PrismaClient();
@@ -20,6 +21,7 @@ async function main() {
     // Seed dalam urutan yang benar untuk menghindari constraint violation
     await seedDivisionSettings(prisma);
     await seedSystemSettings(prisma);
+    await seedOnsiteLocations(prisma); // Tambahkan ini
     await seedUsers(prisma);
     await seedAttendances(prisma);
     await seedLeaves(prisma);
@@ -38,18 +40,18 @@ async function main() {
     console.log('Super Admin Onsite: admin.onsite@company.com / admin123');
     console.log('');
     console.log('Regular Employees: password123 untuk semua akun');
-    console.log('📚 Seeding help content...');
     console.log('');
     console.log('📊 Sample Data Created:');
     console.log('- Division Settings: 4 records');
     console.log('- System Settings: 6 records');
+    console.log('- Onsite Locations: 3 records');
     console.log('- Users: 18 records (4 Super Admin + 14 Employees)');
     console.log('- Attendances: ~100 records (30 hari terakhir)');
     console.log('- Leaves: 6 records');
     console.log('- Overtimes: 8 records');
     console.log('- Salaries: 14 records');
     console.log('- Notifications: 12 records');
-
+    console.log('- Help Content: 15 records');
     
   } catch (error) {
     console.error('❌ Seeding error:', error);

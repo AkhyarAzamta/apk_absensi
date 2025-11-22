@@ -154,7 +154,7 @@ export class OvertimeController {
       }
 
       const overtimes = await prisma.overtime.findMany({
-        where: { status: 'PENDING' },
+        where: { status: 'PENDING', user: { division: req.user.division } },
         include: {
           user: {
             select: {

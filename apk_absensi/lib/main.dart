@@ -1,6 +1,7 @@
 // main.dart
 import 'package:apk_absensi/screens/leave/leave_list_page.dart';
 import 'package:apk_absensi/screens/users/profile/profile_page.dart';
+import 'package:apk_absensi/utils/storage.dart';
 import 'package:flutter/material.dart';
 import 'screens/splash_checker.dart';
 import 'screens/dashboard/dashboard_user.dart';
@@ -27,6 +28,10 @@ html.VideoElement globalVideoElement = html.VideoElement()
   ..style.height = '100%';
 
 void main() {
+    WidgetsFlutterBinding.ensureInitialized();
+  Storage.debugPrintAll().then((_) {
+    runApp(MyApp());
+  });
   // ⬇️ Register 1 videoElement GLOBAL
   ui_web.platformViewRegistry.registerViewFactory(
     'camera-view',

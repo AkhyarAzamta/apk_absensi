@@ -7,3 +7,4 @@ export { seedOvertimes } from './overtimes';
 export { seedSalaries } from './salaries';
 export { seedNotifications } from './notifications';
 export { seedHelpContent } from './help-seeder';
+export { seedOnsiteLocations } from './onsite-locations';

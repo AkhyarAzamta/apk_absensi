@@ -35,10 +35,11 @@ export const saveImageToFile = (imageBuffer: Buffer, userId: number, type: 'chec
     }
 
     const filepath = path.join(uploadsDir, filename);
+    console.log('📁 File disimpan di:', filepath);
 
     // Simpan file
     fs.writeFileSync(filepath, imageBuffer);
-    
+    // Saat menyimpan user
     // Return relative path
     if (type === 'profile') {
       return `/public/uploads/profiles/${filename}`;

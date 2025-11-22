@@ -15,10 +15,11 @@ export class UserController {
         throw new AppError(ErrorType.FORBIDDEN, 'Insufficient permissions');
       }
 
-      const { division, includeInactive } = req.query;
+      const { division, isActive } = req.user;
+      console.log('Query params:', req.user);
       
       let users;
-      if (includeInactive === 'true') {
+      if (isActive === true) {
         // Get all users including inactive ones
         users = await prisma.user.findMany({
           where: division ? { division: division as Division } : {},
@@ -94,7 +95,7 @@ export class UserController {
       console.log('Request file:', req.file ? 'File received' : 'No file');
 
       // Validasi field required
-      const requiredFields = ['employeeId', 'name', 'email', 'password', 'division', 'position', 'joinDate'];
+      const requiredFields = ['employeeId', 'name', 'email', 'password', 'position', 'joinDate'];
       const missingFields = requiredFields.filter(field => !req.body[field]);
       
       if (missingFields.length > 0) {
@@ -107,7 +108,7 @@ export class UserController {
         name: req.body.name,
         email: req.body.email,
         password: req.body.password,
-        division: req.body.division,
+        division: req.user.division,
         position: req.body.position,
         joinDate: req.body.joinDate,
         phone: req.body.phone || undefined,
