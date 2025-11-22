@@ -23,7 +23,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UserListScreen(division: 'FINANCE'),
+            builder: (context) => UserListScreen(division: 'APO'),
           ),
         );
         break;
@@ -31,7 +31,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AttendanceListScreen(division: 'FINANCE'),
+            builder: (context) => AttendanceListScreen(division: 'APO'),
           ),
         );
         break;
@@ -39,7 +39,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LeaveApprovalScreen(division: 'FINANCE'),
+            builder: (context) => LeaveApprovalScreen(division: 'APO'),
           ),
         );
         break;
@@ -79,7 +79,7 @@ class DashboardApo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DashboardTemplate(
-      title: "Dashboard Finance",
+      title: "Dashboard APO",
       menu: menu,
       color: Colors.purple[100],
       onMenuTap: (title) => handleMenuTap(title, context),

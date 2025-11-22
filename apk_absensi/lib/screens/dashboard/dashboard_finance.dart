@@ -1,4 +1,5 @@
 import 'package:apk_absensi/screens/admin/attedance/attedance_list_screen.dart';
+import 'package:apk_absensi/screens/admin/overtime/overtime_approval_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/admin/users/user_list_screen.dart';
@@ -43,7 +44,14 @@ class DashboardFinance extends StatelessWidget {
           ),
         );
         break;
-      // ... case lainnya ...
+      case "Persetujuan Lembur":
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OvertimeApprovalScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
     }
   }
 

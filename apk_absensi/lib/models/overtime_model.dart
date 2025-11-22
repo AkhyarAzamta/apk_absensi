@@ -1,3 +1,4 @@
+// lib/models/overtime_model.dart
 import 'package:flutter/material.dart';
 
 class OvertimeRequest {
@@ -11,6 +12,7 @@ class OvertimeRequest {
   final String? notes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final OvertimeUser? user; // Tambahkan properti user
 
   OvertimeRequest({
     this.id,
@@ -23,6 +25,7 @@ class OvertimeRequest {
     this.notes,
     this.createdAt,
     this.updatedAt,
+    this.user, // Tambahkan di constructor
   });
 
   factory OvertimeRequest.fromJson(Map<String, dynamic> json) {
@@ -30,13 +33,22 @@ class OvertimeRequest {
       id: json['id'],
       userId: json['userId'],
       date: DateTime.parse(json['date']),
-      hours: (json['hours'] is int) ? (json['hours'] as int).toDouble() : json['hours'],
+      hours: (json['hours'] is int)
+          ? (json['hours'] as int).toDouble()
+          : json['hours'],
       reason: json['reason'],
       status: json['status'],
       approvedBy: json['approvedBy'],
       notes: json['notes'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
+      user: json['user'] != null
+          ? OvertimeUser.fromJson(json['user'])
+          : null, // Parse user
     );
   }
 
@@ -65,12 +77,50 @@ class OvertimeRequest {
   // Check if overtime is today
   bool get isToday {
     final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   // Check if overtime is in the future
   bool get isFuture {
     return date.isAfter(DateTime.now());
+  }
+}
+
+class OvertimeUser {
+  final int id;
+  final String name;
+  final String employeeId;
+  final String division;
+  final String position;
+
+  OvertimeUser({
+    required this.id,
+    required this.name,
+    required this.employeeId,
+    required this.division,
+    required this.position,
+  });
+
+  factory OvertimeUser.fromJson(Map<String, dynamic> json) {
+    return OvertimeUser(
+      id: json['id'],
+      name: json['name'],
+      employeeId: json['employeeId'],
+      division: json['division'],
+      position: json['position'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'employeeId': employeeId,
+      'division': division,
+      'position': position,
+    };
   }
 }
 
@@ -109,6 +159,11 @@ class OvertimeData {
     'Target deadline',
     'Support tim lain',
     'Training/kursus',
-    'Lainnya'
+    'Lainnya',
   ];
+
+  // Helper untuk icon
+  static IconData getIcon() {
+    return Icons.access_time;
+  }
 }

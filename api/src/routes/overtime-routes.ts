@@ -8,7 +8,7 @@ const overtimeController = new OvertimeController();
 
 router.post('/', authenticate, validateOvertime, handleValidationErrors, overtimeController.requestOvertime);
 router.get('/my-overtime', authenticate, overtimeController.getMyOvertime);
-router.get('/pending', authenticate, authorize('SUPER_ADMIN'), overtimeController.getPendingOvertime);
+router.get('/', authenticate, authorize('SUPER_ADMIN'), overtimeController.getAllOvertime);
 router.patch('/:overtimeId/status', authenticate, authorize('SUPER_ADMIN'), overtimeController.approveRejectOvertime);
 
 export default router;

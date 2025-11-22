@@ -143,7 +143,7 @@ export class OvertimeController {
     }
   }
 
-  async getPendingOvertime(req: AuthRequest, res: Response): Promise<void> {
+  async getAllOvertime(req: AuthRequest, res: Response): Promise<void> {
     try {
       if (!req.user || req.user.role !== 'SUPER_ADMIN') {
         res.status(403).json({
@@ -154,7 +154,7 @@ export class OvertimeController {
       }
 
       const overtimes = await prisma.overtime.findMany({
-        where: { status: 'PENDING', user: { division: req.user.division } },
+        where: { user: { division: req.user.division } },
         include: {
           user: {
             select: {
@@ -174,10 +174,10 @@ export class OvertimeController {
         data: overtimes,
       });
     } catch (error: any) {
-      console.error('Get pending overtime error:', error);
+      console.error('Get All overtime error:', error);
       res.status(400).json({
         success: false,
-        message: error.message || 'Failed to get pending overtime',
+        message: error.message || 'Failed to get All overtime',
       });
     }
   }
