@@ -1,3 +1,4 @@
+// lib/models/leave_model.dart - UPDATE MODEL YANG SUDAH ADA
 import 'package:flutter/material.dart';
 
 class LeaveRequest {
@@ -12,6 +13,7 @@ class LeaveRequest {
   final String? notes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final LeaveUser? user; // Tambahkan properti user sebagai optional
 
   LeaveRequest({
     this.id,
@@ -25,6 +27,7 @@ class LeaveRequest {
     this.notes,
     this.createdAt,
     this.updatedAt,
+    this.user, // Tambahkan di constructor
   });
 
   factory LeaveRequest.fromJson(Map<String, dynamic> json) {
@@ -44,6 +47,7 @@ class LeaveRequest {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
+      user: json['user'] != null ? LeaveUser.fromJson(json['user']) : null, // Parse user jika ada
     );
   }
 
@@ -76,6 +80,42 @@ class LeaveRequest {
   // Check if leave is upcoming
   bool get isUpcoming {
     return startDate.isAfter(DateTime.now());
+  }
+}
+
+class LeaveUser {
+  final int id;
+  final String name;
+  final String employeeId;
+  final String division;
+  final String position;
+
+  LeaveUser({
+    required this.id,
+    required this.name,
+    required this.employeeId,
+    required this.division,
+    required this.position,
+  });
+
+  factory LeaveUser.fromJson(Map<String, dynamic> json) {
+    return LeaveUser(
+      id: json['id'],
+      name: json['name'],
+      employeeId: json['employeeId'],
+      division: json['division'],
+      position: json['position'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'employeeId': employeeId,
+      'division': division,
+      'position': position,
+    };
   }
 }
 
@@ -130,4 +170,24 @@ class LeaveData {
         return status;
     }
   }
+
+  // Helper untuk icon jenis cuti
+  static IconData getIcon(String type) {
+  switch (type) {
+    case 'CUTI_TAHUNAN':
+      return Icons.beach_access;
+    case 'CUTI_SAKIT':
+      return Icons.medical_services;
+    case 'CUTI_MELAHIRKAN':
+      return Icons.child_care;
+    case 'CUTI_ALASAN_PENTING':
+      return Icons.warning;
+    case 'CUTI_BESAR':
+      return Icons.work;
+    case 'CUTI_DILUAR_TANGGUNGAN':
+      return Icons.beach_access;
+    default:
+      return Icons.event;
+  }
+}
 }

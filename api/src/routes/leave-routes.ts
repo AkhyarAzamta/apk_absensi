@@ -8,7 +8,7 @@ const leaveController = new LeaveController();
 
 router.post('/', authenticate, validateLeave, handleValidationErrors, leaveController.requestLeave);
 router.get('/my-leaves', authenticate, leaveController.getMyLeaves);
-router.get('/pending', authenticate, authorize('SUPER_ADMIN'), leaveController.getPendingLeaves);
+router.get('/', authenticate, authorize('SUPER_ADMIN'), leaveController.getPendingLeaves);
 router.patch('/:leaveId/status', authenticate, authorize('SUPER_ADMIN'), leaveController.approveRejectLeave);
 
 export default router;
