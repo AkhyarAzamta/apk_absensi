@@ -23,7 +23,7 @@ class DashboardFrontdesk extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UserListScreen(division: 'FINANCE'),
+            builder: (context) => UserListScreen(division: 'FRONT_DESK'),
           ),
         );
         break;
@@ -31,7 +31,7 @@ class DashboardFrontdesk extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AttendanceListScreen(division: 'FINANCE'),
+            builder: (context) => AttendanceListScreen(division: 'FRONT_DESK'),
           ),
         );
         break;
@@ -39,7 +39,7 @@ class DashboardFrontdesk extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LeaveApprovalScreen(division: 'FINANCE'),
+            builder: (context) => LeaveApprovalScreen(division: 'FRONT_DESK'),
           ),
         );
         break;
@@ -47,7 +47,7 @@ class DashboardFrontdesk extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OvertimeApprovalScreen(division: 'FINANCE'),
+            builder: (context) => OvertimeApprovalScreen(division: 'FRONT_DESK'),
           ),
         );
         break;
@@ -56,7 +56,7 @@ class DashboardFrontdesk extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ReportScreen(division: 'FINANCE'),
+            builder: (context) => ReportScreen(division: 'FRONT_DESK'),
           ),
         );
         break;
@@ -65,7 +65,7 @@ class DashboardFrontdesk extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DivisionSettingScreen(division: 'FINANCE'),
+            builder: (context) => DivisionSettingScreen(division: 'FRONT_DESK'),
           ),
         );
         break;
@@ -77,7 +77,7 @@ class DashboardFrontdesk extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DashboardTemplate(
-      title: "Dashboard Finance",
+      title: "Dashboard FRONT_DESK",
       menu: menu,
       color: Colors.purple[100],
       onMenuTap: (title) => handleMenuTap(title, context),

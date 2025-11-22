@@ -29,7 +29,7 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UserListScreen(division: 'FINANCE'),
+            builder: (context) => UserListScreen(division: 'ONSITE'),
           ),
         );
         break;
@@ -37,7 +37,7 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AttendanceListScreen(division: 'FINANCE'),
+            builder: (context) => AttendanceListScreen(division: 'ONSITE'),
           ),
         );
         break;
@@ -45,7 +45,7 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LeaveApprovalScreen(division: 'FINANCE'),
+            builder: (context) => LeaveApprovalScreen(division: 'ONSITE'),
           ),
         );
         break;
@@ -53,7 +53,7 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OvertimeApprovalScreen(division: 'FINANCE'),
+            builder: (context) => OvertimeApprovalScreen(division: 'ONSITE'),
           ),
         );
         break;
@@ -62,7 +62,7 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ReportScreen(division: 'FINANCE'),
+            builder: (context) => ReportScreen(division: 'ONSITE'),
           ),
         );
         break;
@@ -71,7 +71,7 @@ class _DashboardOnsiteState extends State<DashboardOnsite> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DivisionSettingScreen(division: 'FINANCE'),
+            builder: (context) => DivisionSettingScreen(division: 'ONSITE'),
           ),
         );
         break;

@@ -23,7 +23,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UserListScreen(division: 'FINANCE'),
+            builder: (context) => UserListScreen(division: 'APO'),
           ),
         );
         break;
@@ -31,7 +31,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AttendanceListScreen(division: 'FINANCE'),
+            builder: (context) => AttendanceListScreen(division: 'APO'),
           ),
         );
         break;
@@ -39,7 +39,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LeaveApprovalScreen(division: 'FINANCE'),
+            builder: (context) => LeaveApprovalScreen(division: 'APO'),
           ),
         );
         break;
@@ -47,7 +47,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OvertimeApprovalScreen(division: 'FINANCE'),
+            builder: (context) => OvertimeApprovalScreen(division: 'APO'),
           ),
         );
         break;
@@ -56,7 +56,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ReportScreen(division: 'FINANCE'),
+            builder: (context) => ReportScreen(division: 'APO'),
           ),
         );
         break;
@@ -65,7 +65,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DivisionSettingScreen(division: 'FINANCE'),
+            builder: (context) => DivisionSettingScreen(division: 'APO'),
           ),
         );
         break;
