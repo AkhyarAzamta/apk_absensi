@@ -1,16 +1,20 @@
+import 'package:apk_absensi/screens/admin/attedance/attedance_list_screen.dart';
+import 'package:apk_absensi/screens/admin/overtime/overtime_approval_screen.dart';
+import 'package:apk_absensi/screens/admin/reports/report_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/admin/users/user_list_screen.dart';
+import 'package:apk_absensi/screens/admin/leaves/leave_approval_screen.dart';
+import 'package:apk_absensi/screens/admin/division/division_setting_screen.dart';
 
 class DashboardFrontdesk extends StatelessWidget {
   final List<Map<String, dynamic>> menu = [
-    {"title": "Data Karyawan", "icon": Icons.people_outline},
-    {"title": "Absensi", "icon": Icons.check},
-    {"title": "Cuti & Lembur", "icon": Icons.badge},
-    {"title": "Laporan", "icon": Icons.insert_chart},
-    {"title": "Export Laporan", "icon": Icons.print},
-    {"title": "Potongan", "icon": Icons.money_off_csred_outlined},
-    {"title": "Pengaturan Jam Kerja", "icon": Icons.timer_outlined},
+    {"title": "Data Karyawan", "icon": Icons.people_alt},
+    {"title": "Absensi", "icon": Icons.fingerprint},
+    {"title": "Persetujuan Cuti", "icon": Icons.fact_check},
+    {"title": "Persetujuan Lembur", "icon": Icons.add_alarm},
+    {"title": "Laporan", "icon": Icons.analytics},
+    {"title": "Divisi", "icon": Icons.settings},
   ];
 
   void handleMenuTap(String title, BuildContext context) {
@@ -23,7 +27,50 @@ class DashboardFrontdesk extends StatelessWidget {
           ),
         );
         break;
-      // ... case lainnya
+      case "Absensi":
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AttendanceListScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
+      case "Persetujuan Cuti":
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LeaveApprovalScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
+      case "Persetujuan Lembur":
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OvertimeApprovalScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
+      case "Laporan":
+        // Tambahkan navigasi ke halaman laporan di sini
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
+      case "Divisi":
+        // Tambahkan navigasi ke halaman jam kerja di sini
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DivisionSettingScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
+      default:
+        print("Menu tidak dikenali: $title");
     }
   }
 

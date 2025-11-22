@@ -1,9 +1,11 @@
 import 'package:apk_absensi/screens/admin/attedance/attedance_list_screen.dart';
-import 'package:apk_absensi/screens/admin/leaves/leave_approval_screen.dart';
+import 'package:apk_absensi/screens/admin/overtime/overtime_approval_screen.dart';
+import 'package:apk_absensi/screens/admin/reports/report_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/admin/users/user_list_screen.dart';
-
+import 'package:apk_absensi/screens/admin/leaves/leave_approval_screen.dart';
+import 'package:apk_absensi/screens/admin/division/division_setting_screen.dart';
 
 class DashboardApo extends StatelessWidget {
   final List<Map<String, dynamic>> menu = [
@@ -12,9 +14,7 @@ class DashboardApo extends StatelessWidget {
     {"title": "Persetujuan Cuti", "icon": Icons.fact_check},
     {"title": "Persetujuan Lembur", "icon": Icons.add_alarm},
     {"title": "Laporan", "icon": Icons.analytics},
-    {"title": "Export Laporan", "icon": Icons.file_download},
-    {"title": "Potongan", "icon": Icons.payments},
-    {"title": "Jam Kerja", "icon": Icons.schedule},
+    {"title": "Divisi", "icon": Icons.settings},
   ];
 
   void handleMenuTap(String title, BuildContext context) {
@@ -23,7 +23,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UserListScreen(division: 'APO'),
+            builder: (context) => UserListScreen(division: 'FINANCE'),
           ),
         );
         break;
@@ -31,7 +31,7 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AttendanceListScreen(division: 'APO'),
+            builder: (context) => AttendanceListScreen(division: 'FINANCE'),
           ),
         );
         break;
@@ -39,40 +39,38 @@ class DashboardApo extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LeaveApprovalScreen(division: 'APO'),
+            builder: (context) => LeaveApprovalScreen(division: 'FINANCE'),
           ),
         );
         break;
       case "Persetujuan Lembur":
-        // TODO: Tambahkan screen untuk persetujuan lembur
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fitur persetujuan lembur akan segera tersedia')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OvertimeApprovalScreen(division: 'FINANCE'),
+          ),
         );
         break;
       case "Laporan":
-        // TODO: Tambahkan screen untuk laporan
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fitur laporan akan segera tersedia')),
+        // Tambahkan navigasi ke halaman laporan di sini
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportScreen(division: 'FINANCE'),
+          ),
         );
         break;
-      case "Export Laporan":
-        // TODO: Tambahkan screen untuk export laporan
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fitur export laporan akan segera tersedia')),
+      case "Divisi":
+        // Tambahkan navigasi ke halaman jam kerja di sini
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DivisionSettingScreen(division: 'FINANCE'),
+          ),
         );
         break;
-      case "Potongan":
-        // TODO: Tambahkan screen untuk potongan
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fitur potongan akan segera tersedia')),
-        );
-        break;
-      case "Jam Kerja":
-        // TODO: Tambahkan screen untuk jam kerja
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fitur jam kerja akan segera tersedia')),
-        );
-        break;
+      default:
+        print("Menu tidak dikenali: $title");
     }
   }
 

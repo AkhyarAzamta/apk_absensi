@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/admin/users/user_list_screen.dart';
 import 'package:apk_absensi/screens/admin/leaves/leave_approval_screen.dart';
+import 'package:apk_absensi/screens/admin/division/division_setting_screen.dart';
 
 class DashboardFinance extends StatelessWidget {
   final List<Map<String, dynamic>> menu = [
@@ -13,12 +14,12 @@ class DashboardFinance extends StatelessWidget {
     {"title": "Persetujuan Cuti", "icon": Icons.fact_check},
     {"title": "Persetujuan Lembur", "icon": Icons.add_alarm},
     {"title": "Laporan", "icon": Icons.analytics},
-    {"title": "Export Laporan", "icon": Icons.file_download},
-    {"title": "Potongan", "icon": Icons.payments},
-    {"title": "Jam Kerja", "icon": Icons.schedule},
+    // {"title": "Export Laporan", "icon": Icons.file_download},
+    // {"title": "Potongan", "icon": Icons.payments},
+    {"title": "Divisi", "icon": Icons.settings},
   ];
 
-// Dalam class DashboardFinance
+  // Dalam class DashboardFinance
   void handleMenuTap(String title, BuildContext context) {
     switch (title) {
       case "Data Karyawan":
@@ -46,14 +47,14 @@ class DashboardFinance extends StatelessWidget {
         );
         break;
       case "Persetujuan Lembur":
-      Navigator.push(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OvertimeApprovalScreen(division: 'FINANCE'),
           ),
         );
         break;
-        case "Laporan":
+      case "Laporan":
         // Tambahkan navigasi ke halaman laporan di sini
         Navigator.push(
           context,
@@ -62,17 +63,27 @@ class DashboardFinance extends StatelessWidget {
           ),
         );
         break;
-      case "Export Laporan":
-        // Tambahkan navigasi ke halaman export laporan di sini
-        break;
-      case "Potongan":
-        // Tambahkan navigasi ke halaman potongan di sini
-        break;
-      case "Jam Kerja":
+      case "Divisi":
         // Tambahkan navigasi ke halaman jam kerja di sini
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DivisionSettingScreen(division: 'FINANCE'),
+          ),
+        );
         break;
       default:
         print("Menu tidak dikenali: $title");
+
+      // Di file routing Anda, tambahkan:
+      // MaterialPageRoute(
+      //   builder: (context) => DivisionSettingScreen(initialDivision: 'FINANCE'),
+      // )
+
+      // // atau untuk overview semua divisi:
+      // MaterialPageRoute(
+      //   builder: (context) => const DivisionSettingsOverviewScreen(),
+      // )
     }
   }
 
