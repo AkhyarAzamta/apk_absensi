@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 export class FrontDeskController {
   // Dashboard real-time kehadiran
-  async getRealtimeAttendance(req: AuthRequest, res: Response): Promise<void> {
+  async getRealtimeAttendance(_req: AuthRequest, res: Response): Promise<void> {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);

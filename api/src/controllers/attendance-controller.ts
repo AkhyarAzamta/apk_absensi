@@ -388,7 +388,7 @@ export class AttendanceController {
 
   async updateManualAttendance(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { attendanceId, userId, date, checkIn, checkOut, reason } = req.body;
+      const { attendanceId, checkIn, checkOut, reason } = req.body;
 
       if (!attendanceId) {
         res.status(400).json({

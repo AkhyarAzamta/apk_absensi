@@ -10,7 +10,7 @@ export class OnsiteController {
   // Validasi lokasi GPS untuk absensi onsite - FIXED VERSION
   async validateGPSCheckIn(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { userId, latitude, longitude, locationName } = req.body;
+      const { userId, latitude, longitude } = req.body;
 
       // Validasi input
       if (!userId || !latitude || !longitude) {
@@ -130,7 +130,7 @@ export class OnsiteController {
   }
 
   // Dashboard monitoring lapangan
-  async getFieldMonitoring(req: AuthRequest, res: Response): Promise<void> {
+  async getFieldMonitoring(_req: AuthRequest, res: Response): Promise<void> {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);

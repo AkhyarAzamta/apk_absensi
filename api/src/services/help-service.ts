@@ -1,5 +1,5 @@
-import { PrismaClient, Division, HelpContentType } from '@prisma/client';
-import { HelpResponse, CreateHelpContentRequest, UpdateHelpContentRequest } from '../types/help';
+import { PrismaClient, Division  } from '@prisma/client';
+import { HelpResponse, CreateHelpContentRequest, UpdateHelpContentRequest, HelpContent } from '../types';
 
 const prisma = new PrismaClient();
 
@@ -11,7 +11,7 @@ export class HelpService {
         isActive: true,
         OR: [
           { division: null }, // Konten global
-          { division: division }, // Konten khusus divisi
+          { division: division || null }, // Konten khusus divisi
         ],
       },
       orderBy: [
@@ -21,10 +21,10 @@ export class HelpService {
     });
 
     // Kelompokkan berdasarkan type
-    const faqs = helpContents.filter(content => content.type === 'FAQ');
-    const contacts = helpContents.filter(content => content.type === 'CONTACT');
-    const appInfo = helpContents.filter(content => content.type === 'APP_INFO');
-    const general = helpContents.filter(content => content.type === 'GENERAL');
+    const faqs = helpContents.filter(content => content.type === 'FAQ') as HelpContent[];
+    const contacts = helpContents.filter(content => content.type === 'CONTACT') as HelpContent[];
+    const appInfo = helpContents.filter(content => content.type === 'APP_INFO') as HelpContent[];
+    const general = helpContents.filter(content => content.type === 'GENERAL') as HelpContent[];
 
     return {
       faqs,
