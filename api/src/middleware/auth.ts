@@ -14,9 +14,9 @@ export const authenticate = async (
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      res.status(401).json({ 
-        success: false, 
-        message: 'Access denied. No token provided.' 
+      res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
       });
       return;
     }
@@ -27,17 +27,17 @@ export const authenticate = async (
     });
 
     if (!user) {
-      res.status(401).json({ 
-        success: false, 
-        message: 'Invalid token.' 
+      res.status(401).json({
+        success: false,
+        message: 'Invalid token.'
       });
       return;
     }
 
     if (!user.isActive) {
-      res.status(401).json({ 
-        success: false, 
-        message: 'Account is deactivated.' 
+      res.status(401).json({
+        success: false,
+        message: 'Account is deactivated.'
       });
       return;
     }
@@ -45,9 +45,9 @@ export const authenticate = async (
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ 
-      success: false, 
-      message: 'Invalid token.' 
+    res.status(401).json({
+      success: false,
+      message: 'Invalid token.'
     });
   }
 };
@@ -62,30 +62,44 @@ export const authorize = (allowedRoles: string | string[]) => {
       });
     }
 
-    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-    
-    // SUPER_ADMIN memiliki akses ke semua endpoint
+    const userRole = req.user.role;
+
     const superAdminRoles = [
-      'SUPER_ADMIN', // legacy
-      'SUPER_ADMIN_FINANCE', 
-      'SUPER_ADMIN_APO', 
-      'SUPER_ADMIN_FRONT_DESK', 
-      'SUPER_ADMIN_ONSITE'
+      'SUPER_ADMIN',
+      'SUPER_ADMIN_FINANCE',
+      'SUPER_ADMIN_APO',
+      'SUPER_ADMIN_FRONT_DESK',
+      'SUPER_ADMIN_ONSITE',
     ];
 
-    // Jika user adalah super admin, izinkan akses
-    if (superAdminRoles.includes(req.user.role)) {
-      return next();
-    }
+    // 🟢 Jika authorize('*'), maka hanya super admin yang boleh
+    if (allowedRoles === '*') {
+      if (superAdminRoles.includes(userRole)) {
+        return next();
+      }
 
-    // Untuk user biasa, cek role
-    if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Insufficient permissions'
+        message: 'Only super-admin roles are allowed'
       });
     }
 
-    next();
+    // Jika allowedRoles bukan *, proses biasa
+    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+
+    // Jika endpoint mengizinkan SUPER_ADMIN, maka semua super admin boleh
+    if (roles.includes('SUPER_ADMIN') && superAdminRoles.includes(userRole)) {
+      return next();
+    }
+
+    // Jika role user ada dalam roles yang diizinkan
+    if (roles.includes(userRole)) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: 'Insufficient permissions'
+    });
   };
 };

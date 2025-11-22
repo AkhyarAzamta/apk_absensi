@@ -319,8 +319,51 @@ async getAttendanceHistoryByDivision(
       date: 'desc'
     },
     include: {
-      user: true
+      user: {
+        select: {
+          id: true,
+          employeeId: true,
+          name: true,
+          email: true,
+          division: true,
+          role: true,
+          position: true,
+          photo: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          // salaries: true
+        }
+      }
     }
   });
 }
+
+  async deleteAttendance(attendanceId: number): Promise<void> {
+    try {
+      // Cek dulu apakah attendance exists
+      const existingAttendance = await prisma.attendance.findUnique({
+        where: { id: attendanceId }
+      });
+
+      if (!existingAttendance) {
+        throw new Error(`Attendance record with ID ${attendanceId} not found`);
+      }
+
+      // Jika ada, baru hapus
+      await prisma.attendance.delete({
+        where: { id: attendanceId }
+      });
+    } catch (error: any) {
+      console.error('Delete attendance service error:', error);
+      
+      // Handle Prisma specific errors
+      if (error.code === 'P2025') {
+        throw new Error(`Attendance record with ID ${attendanceId} not found`);
+      }
+      
+      // Re-throw other errors
+      throw error;
+    }
+  }
 }

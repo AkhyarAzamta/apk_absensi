@@ -1,3 +1,4 @@
+import 'package:apk_absensi/screens/admin/attedance/attedance_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/admin/users/user_list_screen.dart';
@@ -14,20 +15,28 @@ class DashboardFinance extends StatelessWidget {
     {"title": "Jam Kerja", "icon": Icons.schedule},
   ];
 
-  void handleMenuTap(String title, BuildContext context) {
-    switch (title) {
-      case "Data Karyawan":
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => UserListScreen(division: 'FINANCE'),
-          ),
-        );
-        break;
-      // ... case lainnya
-    }
+// Dalam class DashboardFinance
+void handleMenuTap(String title, BuildContext context) {
+  switch (title) {
+    case "Data Karyawan":
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UserListScreen(division: 'FINANCE'),
+        ),
+      );
+      break;
+    case "Absensi":
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AttendanceListScreen(division: 'FINANCE'),
+        ),
+      );
+      break;
+    // ... case lainnya
   }
-
+}
   @override
   Widget build(BuildContext context) {
     return DashboardTemplate(

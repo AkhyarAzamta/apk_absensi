@@ -7,11 +7,11 @@ class User {
   final String division;
   final String role;
   final String position;
+  final String? photo; // ✅ Pastikan ini nullable
+  final bool isActive;
   final DateTime joinDate;
   final String? phone;
   final String? address;
-  final String? photo;
-  final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -23,70 +23,75 @@ class User {
     required this.division,
     required this.role,
     required this.position,
+    this.photo, // ✅ Nullable
+    required this.isActive,
     required this.joinDate,
     this.phone,
     this.address,
-    this.photo,
-    required this.isActive,
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'],
-      employeeId: json['employeeId'],
-      name: json['name'],
-      email: json['email'],
-      division: json['division'],
-      role: json['role'],
-      position: json['position'],
-      joinDate: DateTime.parse(json['joinDate']),
-      phone: json['phone'],
-      address: json['address'],
-      photo: json['photo'],
-      isActive: json['isActive'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-    );
+    try {
+      return User(
+        id: json['id'] as int? ?? 0,
+        employeeId: json['employeeId']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        email: json['email']?.toString() ?? '',
+        division: json['division']?.toString() ?? '',
+        role: json['role']?.toString() ?? 'USER',
+        position: json['position']?.toString() ?? '',
+        photo: json['photo']?.toString(), // ✅ Handle null
+        isActive: json['isActive'] as bool? ?? true,
+        joinDate: json['joinDate'] != null
+            ? DateTime.parse(json['joinDate'].toString()).toLocal()
+            : DateTime.now(),
+        phone: json['phone']?.toString(),
+        address: json['address']?.toString(),
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'].toString()).toLocal()
+            : DateTime.now(),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'].toString()).toLocal()
+            : DateTime.now(),
+      );
+    } catch (e) {
+      print('❌ Error parsing User JSON: $e');
+      print('❌ Problematic User JSON: $json');
+      // Return default user to prevent crash
+      return User(
+        id: 0,
+        employeeId: 'UNKNOWN',
+        name: 'Unknown User',
+        email: 'unknown@example.com',
+        division: 'UNKNOWN',
+        role: 'USER',
+        position: 'Unknown',
+        isActive: false,
+        joinDate: DateTime.now(),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'employeeId': employeeId,
       'name': name,
       'email': email,
       'division': division,
+      'role': role,
       'position': position,
-      'joinDate': joinDate.toIso8601String().split('T')[0],
+      'photo': photo,
+      'isActive': isActive,
+      'joinDate': joinDate.toIso8601String(),
       'phone': phone,
       'address': address,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
-  }
-
-  User copyWith({
-    String? name,
-    String? email,
-    String? division,
-    String? position,
-    String? phone,
-    String? address,
-  }) {
-    return User(
-      id: id,
-      employeeId: employeeId,
-      name: name ?? this.name,
-      email: email ?? this.email,
-      division: division ?? this.division,
-      role: role,
-      position: position ?? this.position,
-      joinDate: joinDate,
-      phone: phone ?? this.phone,
-      address: address ?? this.address,
-      photo: photo,
-      isActive: isActive,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-    );
   }
 }

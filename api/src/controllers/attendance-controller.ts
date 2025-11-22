@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest, AttendanceFormDataRequest } from '../types';
 import { AttendanceService } from '../services/attendance-service';
-import { Division, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const attendanceService = new AttendanceService();
@@ -183,35 +183,35 @@ export class AttendanceController {
 
   async manualAttendance(req: AuthRequest, res: Response): Promise<void> {
     try {
-      if (!req.user || req.user.role !== 'SUPER_ADMIN') {
-        res.status(403).json({
+      const { userId, date, checkIn, checkOut, reason } = req.body;
+
+      // Ambil division user yang akan dibuatkan absensi manual
+      const targetUser = await prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { division: true }
+      });
+
+      if (!targetUser) {
+        res.status(404).json({
           success: false,
-          message: 'Insufficient permissions',
+          message: 'Target user not found',
         });
         return;
       }
 
-      const { userId, date, checkIn, checkOut, reason } = req.body;
-
-      const user = await prisma.user.findFirst({
-        where: {
-          id: req.user.id
-        },
-        select: {
-          division: true
-        }
-      })
-      if (!req.user || req.user.division === user?.division ) {
+      // Opsional: super admin hanya boleh input untuk division yang sama
+      // Jika tidak butuh, HAPUS kondisi ini
+      if (req.user?.division !== targetUser.division) {
         res.status(403).json({
           success: false,
-          message: 'Insufficient permissions',
+          message: 'You cannot record attendance for another division',
         });
         return;
       }
 
       const attendance = await prisma.attendance.create({
         data: {
-          userId: parseInt(userId),
+          userId: Number(userId),
           date: new Date(date),
           checkIn: checkIn ? new Date(checkIn) : null,
           checkOut: checkOut ? new Date(checkOut) : null,
@@ -225,8 +225,10 @@ export class AttendanceController {
         message: 'Manual attendance recorded successfully',
         data: attendance,
       });
+
     } catch (error: any) {
       console.error('Manual attendance error:', error);
+
       res.status(400).json({
         success: false,
         message: error.message || 'Failed to record manual attendance',
@@ -311,6 +313,138 @@ export class AttendanceController {
       res.status(400).json({
         success: false,
         message: error.message || "Failed to get attendance history",
+      });
+    }
+  }
+
+  async deleteAttendance(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const { id } = req.params;
+
+      // Validasi parameter
+      if (!id || isNaN(parseInt(id))) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid attendance ID',
+        });
+        return;
+      }
+
+      const attendanceId = parseInt(id);
+
+      // Optional: Cek apakah user memiliki akses untuk menghapus attendance ini
+      // (jika diperlukan authorization tambahan)
+      const attendance = await prisma.attendance.findUnique({
+        where: { id: attendanceId },
+        include: { user: true }
+      });
+
+      if (attendance) {
+        // Cek jika admin hanya bisa menghapus attendance di division yang sama
+        if (attendance.user.division !== req.user.division) {
+          res.status(403).json({
+            success: false,
+            message: 'You cannot delete attendance from another division',
+          });
+          return;
+        }
+      }
+
+      await attendanceService.deleteAttendance(attendanceId);
+
+      res.json({
+        success: true,
+        message: 'Attendance record deleted successfully',
+      });
+    } catch (error: any) {
+      console.error('Delete attendance error:', error);
+
+      // Handle different types of errors
+      if (error.message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          message: error.message,
+        });
+      } else if (error.code === 'P2025') {
+        res.status(404).json({
+          success: false,
+          message: 'Attendance record not found',
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: error.message || 'Failed to delete attendance record',
+        });
+      }
+    }
+  }
+
+  async updateManualAttendance(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { attendanceId, userId, date, checkIn, checkOut, reason } = req.body;
+
+      if (!attendanceId) {
+        res.status(400).json({
+          success: false,
+          message: 'Attendance ID is required',
+        });
+        return;
+      }
+
+      // Cek apakah attendance exists
+      const existingAttendance = await prisma.attendance.findUnique({
+        where: { id: Number(attendanceId) },
+        include: { user: true }
+      });
+
+      if (!existingAttendance) {
+        res.status(404).json({
+          success: false,
+          message: 'Attendance record not found',
+        });
+        return;
+      }
+
+      // Authorization check - hanya bisa edit attendance di division yang sama
+      if (existingAttendance.user.division !== req.user?.division) {
+        res.status(403).json({
+          success: false,
+          message: 'You cannot edit attendance from another division',
+        });
+        return;
+      }
+
+      // Update data
+      const updatedAttendance = await prisma.attendance.update({
+        where: { id: Number(attendanceId) },
+        data: {
+          checkIn: checkIn ? new Date(checkIn) : null,
+          checkOut: checkOut ? new Date(checkOut) : null,
+          notes: reason || null,
+          // Recalculate status based on new times if needed
+          // Anda bisa menambahkan logic untuk recalculate lateMinutes, overtimeMinutes, status
+        },
+      });
+
+      res.json({
+        success: true,
+        message: 'Manual attendance updated successfully',
+        data: updatedAttendance,
+      });
+
+    } catch (error: any) {
+      console.error('Update manual attendance error:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to update manual attendance',
       });
     }
   }
