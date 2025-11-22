@@ -4,8 +4,8 @@ import { ReportFilter } from '../types';
 const prisma = new PrismaClient();
 
 export class ReportService {
-  async generateAttendanceReport(filters: ReportFilter) {
-    const { startDate, endDate, division, employeeId } = filters;
+  async generateAttendanceReport(division: Division, filters: ReportFilter) {
+    const { startDate, endDate, employeeId } = filters;
 
     const whereClause: any = {};
 

@@ -1,5 +1,6 @@
 import 'package:apk_absensi/screens/admin/attedance/attedance_list_screen.dart';
 import 'package:apk_absensi/screens/admin/overtime/overtime_approval_screen.dart';
+import 'package:apk_absensi/screens/admin/reports/report_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:apk_absensi/widgets/dashboard_template.dart';
 import 'package:apk_absensi/screens/admin/users/user_list_screen.dart';
@@ -52,6 +53,26 @@ class DashboardFinance extends StatelessWidget {
           ),
         );
         break;
+        case "Laporan":
+        // Tambahkan navigasi ke halaman laporan di sini
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportScreen(division: 'FINANCE'),
+          ),
+        );
+        break;
+      case "Export Laporan":
+        // Tambahkan navigasi ke halaman export laporan di sini
+        break;
+      case "Potongan":
+        // Tambahkan navigasi ke halaman potongan di sini
+        break;
+      case "Jam Kerja":
+        // Tambahkan navigasi ke halaman jam kerja di sini
+        break;
+      default:
+        print("Menu tidak dikenali: $title");
     }
   }
 

@@ -16,7 +16,6 @@ export class UserController {
       }
 
       const { division, isActive } = req.user;
-      console.log('Query params:', req.user);
       
       let users;
       if (isActive === true) {
@@ -89,11 +88,6 @@ export class UserController {
         throw new AppError(ErrorType.FORBIDDEN, 'Insufficient permissions');
       }
 
-      // Debug: Log request body dan file
-      console.log('Request body fields:', Object.keys(req.body));
-      console.log('Request body values:', req.body);
-      console.log('Request file:', req.file ? 'File received' : 'No file');
-
       // Validasi field required
       const requiredFields = ['employeeId', 'name', 'email', 'password', 'position', 'joinDate'];
       const missingFields = requiredFields.filter(field => !req.body[field]);
@@ -115,15 +109,12 @@ export class UserController {
         address: req.body.address || undefined,
       };
 
-      console.log('Creating user with data:', userData);
-
       // Buat user tanpa foto dulu
       const user = await userService.createUser(userData);
 
       // Jika ada file foto, simpan dan update user
       if (req.file) {
         try {
-          console.log('Saving profile photo for user:', user.id);
           const photoPath = saveImageToFile(req.file.buffer, user.id, 'profile');
           const updatedUser = await userService.updateUser(user.id, { photo: photoPath });
           

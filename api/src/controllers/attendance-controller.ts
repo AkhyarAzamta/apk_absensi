@@ -133,7 +133,6 @@ export class AttendanceController {
         start,
         end
       );
-      console.log(attendances)
       res.json({
         success: true,
         data: attendances,
