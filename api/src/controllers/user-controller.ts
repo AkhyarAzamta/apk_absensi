@@ -4,6 +4,7 @@ import { UserService } from '../services/user-service';
 import { saveImageToFile } from '../utils/file-storage';
 import { PrismaClient, Division } from '@prisma/client';
 import { sendErrorResponse, AppError, ErrorType, throwValidationError } from '../utils/error-handler';
+import { hashPassword } from '../utils/auth';
 
 const prisma = new PrismaClient();
 const userService = new UserService();
@@ -102,6 +103,7 @@ export class UserController {
         console.log('❌ Missing fields:', missingFields);
         throwValidationError(`Missing required fields: ${missingFields.join(', ')}`);
       }
+      const hashedPassword = await hashPassword('password123');
 
       // ✅ DEBUG: Log email yang diterima
       console.log('📧 Email received:', req.body.email);
@@ -112,7 +114,7 @@ export class UserController {
         employeeId: req.body.employeeId,
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password,
+        password: hashedPassword, // Set default password
         division: req.user.division,
         position: req.body.position,
         joinDate: req.body.joinDate,

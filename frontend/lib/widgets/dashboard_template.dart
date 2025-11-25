@@ -19,6 +19,7 @@ class DashboardTemplate extends StatefulWidget {
   final Color? color;
   final String? name;
   final String? userEmail;
+  final String? division;
   final void Function(String title)? onMenuTap;
 
   const DashboardTemplate({
@@ -28,7 +29,8 @@ class DashboardTemplate extends StatefulWidget {
     this.color,
     this.name,
     this.userEmail,
-    this.onMenuTap,
+    this.division,
+    this.onMenuTap, String? userDivision,
   }) : super(key: key);
 
   @override
