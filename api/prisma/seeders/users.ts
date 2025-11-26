@@ -49,7 +49,7 @@ export async function seedUsers(prisma: PrismaClient) {
   ];
 
   for (const admin of superAdmins) {
-    const hashedPassword = await hashPassword(admin.password);
+    const hashedPassword: string = await hashPassword(admin.password);
     await prisma.user.upsert({
       where: { email: admin.email },
       update: {},
