@@ -1,4 +1,7 @@
 // lib/models/onsite_location_model.dart
+import 'package:apk_absensi/models/division_model.dart';
+import 'package:flutter/material.dart'; // ✅ IMPORT BARU
+
 class OnsiteLocation {
   final int id;
   final String name;
@@ -57,4 +60,10 @@ class OnsiteLocation {
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
+
+  // ✅ PERBAIKAN: Helper methods untuk division
+  Division get divisionEnum => DivisionHelper.fromString(division);
+  String get divisionDisplayName => divisionEnum.displayName;
+  Color get divisionColor => divisionEnum.color;
+  IconData get divisionIcon => divisionEnum.icon;
 }

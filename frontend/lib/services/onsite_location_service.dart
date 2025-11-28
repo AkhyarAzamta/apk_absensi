@@ -8,9 +8,31 @@ import 'package:apk_absensi/utils/storage.dart';
 class OnsiteLocationService {
   static final String _baseUrl = ApiConfig.baseUrl;
 
-  static Future<List<OnsiteLocation>> getLocationsDivision(
-    String division,
-  ) async {
+  // ✅ PERBAIKAN: Tambahkan parameter division untuk filter
+  static Future<List<OnsiteLocation>> getLocationsByDivision(String division) async {
+    try {
+      final token = await Storage.getToken();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/onsite/locations?division=$division'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body)['data'];
+        return data.map((json) => OnsiteLocation.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load locations: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading locations: $e');
+    }
+  }
+
+  // ✅ PERBAIKAN: Method untuk mendapatkan semua lokasi (tanpa filter)
+  static Future<List<OnsiteLocation>> getAllLocations() async {
     try {
       final token = await Storage.getToken();
       final response = await http.get(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:apk_absensi/models/onsite_location_model.dart';
 import 'package:apk_absensi/services/onsite_location_service.dart';
 import 'package:apk_absensi/widgets/loading_widget.dart';
+import 'package:apk_absensi/models/division_model.dart';
 
 class OnsiteLocationsTab extends StatefulWidget {
   final String division;
@@ -34,7 +35,7 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
     });
 
     try {
-      final locations = await OnsiteLocationService.getLocationsDivision(
+      final locations = await OnsiteLocationService.getLocationsByDivision(
         widget.division,
       );
 
@@ -77,6 +78,7 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
     }
   }
 
+  // ✅ TAMBAHKAN: Method _createLocation yang hilang
   Future<void> _createLocation(Map<String, dynamic> data) async {
     try {
       setState(() {
@@ -86,6 +88,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
       await OnsiteLocationService.createLocation(data);
       await _loadLocations();
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Lokasi berhasil ditambahkan'),
@@ -93,6 +97,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menambahkan lokasi: $e'),
@@ -108,6 +114,7 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
     }
   }
 
+  // ✅ TAMBAHKAN: Method _updateLocation yang hilang
   Future<void> _updateLocation(int id, Map<String, dynamic> data) async {
     try {
       setState(() {
@@ -117,6 +124,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
       await OnsiteLocationService.updateLocation(id, data);
       await _loadLocations();
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Lokasi berhasil diperbarui'),
@@ -124,6 +133,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal memperbarui lokasi: $e'),
@@ -139,6 +150,7 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
     }
   }
 
+  // ✅ TAMBAHKAN: Method _toggleLocationStatus yang hilang
   Future<void> _toggleLocationStatus(int id, bool currentStatus) async {
     try {
       setState(() {
@@ -147,6 +159,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
 
       await OnsiteLocationService.toggleLocationStatus(id);
       await _loadLocations();
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -157,6 +171,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal mengubah status lokasi: $e'),
@@ -172,6 +188,7 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
     }
   }
 
+  // ✅ TAMBAHKAN: Method _deleteLocation yang hilang
   Future<void> _deleteLocation(int id) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -201,6 +218,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
         await OnsiteLocationService.deleteLocation(id);
         await _loadLocations();
 
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Lokasi berhasil dihapus'),
@@ -208,6 +227,8 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
           ),
         );
       } catch (e) {
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal menghapus lokasi: $e'),
@@ -225,14 +246,20 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
   }
 
   Widget _buildLocationCard(OnsiteLocation location) {
+    final division = DivisionHelper.fromString(location.division);
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
-        leading: Icon(
-          location.isActive ? Icons.location_on : Icons.location_off,
-          color: location.isActive ? Colors.green : Colors.grey,
-          size: 32,
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: division.color.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(division.icon, color: division.color, size: 20),
         ),
         title: Text(
           location.name,
@@ -246,17 +273,59 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
           children: [
             Text(location.address),
             const SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: division.color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: division.color.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    division.displayName,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: division.color,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  location.isActive ? Icons.check_circle : Icons.remove_circle,
+                  size: 12,
+                  color: location.isActive ? Colors.green : Colors.grey,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  location.isActive ? 'Aktif' : 'Nonaktif',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: location.isActive ? Colors.green : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(
               'Koordinat: ${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}',
+              style: const TextStyle(fontSize: 12),
             ),
-            Text('Radius: ${location.radius} meter'),
+            Text(
+              'Radius: ${location.radius} meter',
+              style: const TextStyle(fontSize: 12),
+            ),
           ],
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.edit, color: Colors.blue),
+              icon: const Icon(Icons.edit, color: Colors.blue),
               onPressed: () => _showEditLocationDialog(location),
             ),
             IconButton(
@@ -268,7 +337,7 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
                   _toggleLocationStatus(location.id, location.isActive),
             ),
             IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _deleteLocation(location.id),
             ),
           ],
@@ -381,18 +450,24 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _radiusController = TextEditingController();
+
+  Division _selectedDivision = Division.ONSITE;
   bool _isActive = true;
 
   @override
   void initState() {
     super.initState();
+
     if (widget.location != null) {
+      _selectedDivision = DivisionHelper.fromString(widget.location!.division);
       _nameController.text = widget.location!.name;
       _addressController.text = widget.location!.address;
       _latitudeController.text = widget.location!.latitude.toString();
       _longitudeController.text = widget.location!.longitude.toString();
       _radiusController.text = widget.location!.radius.toString();
       _isActive = widget.location!.isActive;
+    } else {
+      _selectedDivision = DivisionHelper.fromString(widget.division);
     }
   }
 
@@ -416,11 +491,47 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              DropdownButtonFormField<Division>(
+                value: _selectedDivision,
+                decoration: const InputDecoration(
+                  labelText: 'Divisi',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.business),
+                ),
+                items: Division.values.map((Division division) {
+                  return DropdownMenuItem<Division>(
+                    value: division,
+                    child: Row(
+                      children: [
+                        Icon(division.icon, color: division.color, size: 20),
+                        const SizedBox(width: 8),
+                        Text(division.displayName),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (Division? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedDivision = newValue;
+                    });
+                  }
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Pilih divisi';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
                   labelText: 'Nama Lokasi',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.location_city),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -430,11 +541,13 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                 },
               ),
               const SizedBox(height: 16),
+
               TextFormField(
                 controller: _addressController,
                 decoration: const InputDecoration(
                   labelText: 'Alamat',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.home),
                 ),
                 maxLines: 2,
                 validator: (value) {
@@ -445,6 +558,7 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                 },
               ),
               const SizedBox(height: 16),
+
               Row(
                 children: [
                   Expanded(
@@ -453,6 +567,7 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                       decoration: const InputDecoration(
                         labelText: 'Latitude',
                         border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.explore),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -461,6 +576,10 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                         }
                         if (double.tryParse(value) == null) {
                           return 'Latitude harus angka';
+                        }
+                        final lat = double.parse(value);
+                        if (lat < -90 || lat > 90) {
+                          return 'Latitude harus antara -90 sampai 90';
                         }
                         return null;
                       },
@@ -473,6 +592,7 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                       decoration: const InputDecoration(
                         labelText: 'Longitude',
                         border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.explore),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -482,6 +602,10 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                         if (double.tryParse(value) == null) {
                           return 'Longitude harus angka';
                         }
+                        final lng = double.parse(value);
+                        if (lng < -180 || lng > 180) {
+                          return 'Longitude harus antara -180 sampai 180';
+                        }
                         return null;
                       },
                     ),
@@ -489,11 +613,13 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                 ],
               ),
               const SizedBox(height: 16),
+
               TextFormField(
                 controller: _radiusController,
                 decoration: const InputDecoration(
                   labelText: 'Radius (meter)',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.radar),
                   suffixText: 'meter',
                 ),
                 keyboardType: TextInputType.number,
@@ -505,13 +631,14 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                   if (radius == null) {
                     return 'Radius harus angka';
                   }
-                  if (radius < 50 || radius > 5000) {
-                    return 'Radius harus antara 50-5000 meter';
+                  if (radius < 5 || radius > 5000) {
+                    return 'Radius harus antara 5-5000 meter';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
+
               if (widget.location != null)
                 SwitchListTile(
                   title: const Text('Aktif'),
@@ -536,7 +663,7 @@ class _LocationFormDialogState extends State<LocationFormDialog> {
                 'latitude': double.parse(_latitudeController.text),
                 'longitude': double.parse(_longitudeController.text),
                 'radius': int.parse(_radiusController.text),
-                'division': widget.division,
+                'division': _selectedDivision.label,
                 'isActive': _isActive,
               });
             }

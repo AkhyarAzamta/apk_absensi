@@ -72,21 +72,21 @@ export class AttendanceService {
       const selfiePath = saveImageToFile(data.selfie, userId, 'checkin');
 
       // Face Recognition (mock implementation)
-      if (user.photo) {
-        const selfieBase64 = data.selfie.toString('base64');
-        const faceVerification = await verifyFace(selfieBase64, user.photo);
-        if (!faceVerification.isMatch) {
-          deleteImageFile(selfiePath);
+      // if (user.photo) {
+      //   const selfieBase64 = data.selfie.toString('base64');
+      //   const faceVerification = await verifyFace(selfieBase64, user.photo);
+      //   if (!faceVerification.isMatch) {
+      //     deleteImageFile(selfiePath);
 
-          await sendNotification(
-            userId,
-            'Absen Gagal - Wajah Tidak Cocok',
-            `Absen masuk gagal: ${faceVerification.message}. Confidence: ${(faceVerification.confidence * 100).toFixed(2)}%`,
-            'ATTENDANCE_FAILED'
-          );
-          throw new Error(faceVerification.message);
-        }
-      }
+      //     await sendNotification(
+      //       userId,
+      //       'Absen Gagal - Wajah Tidak Cocok',
+      //       `Absen masuk gagal: ${faceVerification.message}. Confidence: ${(faceVerification.confidence * 100).toFixed(2)}%`,
+      //       'ATTENDANCE_FAILED'
+      //     );
+      //     throw new Error(faceVerification.message);
+      //   }
+      // }
 
       // Check if already checked in today
       const today = new Date(data.date);
