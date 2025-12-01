@@ -35,9 +35,7 @@ class _OnsiteLocationsTabState extends State<OnsiteLocationsTab> {
     });
 
     try {
-      final locations = await OnsiteLocationService.getLocationsByDivision(
-        widget.division,
-      );
+      final locations = await OnsiteLocationService.getAllLocations();
 
       if (!mounted) return;
 
