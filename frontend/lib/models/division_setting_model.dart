@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 
 class DivisionSetting {
   final String division;
-  final String workStartTime;
-  final String workEndTime;
-  final int lateTolerance;
+  final String workStart;
+  final String workEnd;
+  final int lateThreshold;
   final double overtimeRate;
   final double deductionRate;
   final double? baseSalary;
@@ -13,9 +13,9 @@ class DivisionSetting {
 
   DivisionSetting({
     required this.division,
-    required this.workStartTime,
-    required this.workEndTime,
-    required this.lateTolerance,
+    required this.workStart,
+    required this.workEnd,
+    required this.lateThreshold,
     required this.overtimeRate,
     required this.deductionRate,
     this.baseSalary,
@@ -25,11 +25,11 @@ class DivisionSetting {
   factory DivisionSetting.fromJson(Map<String, dynamic> json) {
     return DivisionSetting(
       division: json['division'] ?? '',
-      workStartTime: json['workStartTime'] ?? '08:00',
-      workEndTime: json['workEndTime'] ?? '17:00',
-      lateTolerance: (json['lateTolerance'] is int)
-          ? json['lateTolerance']
-          : (json['lateTolerance'] as num).toInt(),
+      workStart: json['workStart'] ?? '08:00',
+      workEnd: json['workEnd'] ?? '17:00',
+      lateThreshold: (json['lateThreshold'] is int)
+          ? json['lateThreshold']
+          : (json['lateThreshold'] as num).toInt(),
       overtimeRate: (json['overtimeRate'] is double)
           ? json['overtimeRate']
           : (json['overtimeRate'] as num).toDouble(),
@@ -52,9 +52,9 @@ class DivisionSetting {
   Map<String, dynamic> toJson() {
     return {
       'division': division,
-      'workStartTime': workStartTime,
-      'workEndTime': workEndTime,
-      'lateTolerance': lateTolerance,
+      'workStart': workStart,
+      'workEnd': workEnd,
+      'lateThreshold': lateThreshold,
       'overtimeRate': overtimeRate,
       'deductionRate': deductionRate,
       if (baseSalary != null) 'baseSalary': baseSalary,
@@ -64,9 +64,9 @@ class DivisionSetting {
 
   DivisionSetting copyWith({
     String? division,
-    String? workStartTime,
-    String? workEndTime,
-    int? lateTolerance,
+    String? workStart,
+    String? workEnd,
+    int? lateThreshold,
     double? overtimeRate,
     double? deductionRate,
     double? baseSalary,
@@ -74,9 +74,9 @@ class DivisionSetting {
   }) {
     return DivisionSetting(
       division: division ?? this.division,
-      workStartTime: workStartTime ?? this.workStartTime,
-      workEndTime: workEndTime ?? this.workEndTime,
-      lateTolerance: lateTolerance ?? this.lateTolerance,
+      workStart: workStart ?? this.workStart,
+      workEnd: workEnd ?? this.workEnd,
+      lateThreshold: lateThreshold ?? this.lateThreshold,
       overtimeRate: overtimeRate ?? this.overtimeRate,
       deductionRate: deductionRate ?? this.deductionRate,
       baseSalary: baseSalary ?? this.baseSalary,
@@ -149,9 +149,9 @@ class DivisionSettingData {
   static DivisionSetting getDefaultSetting(String division) {
     return DivisionSetting(
       division: division,
-      workStartTime: '08:00',
-      workEndTime: '17:00',
-      lateTolerance: 15,
+      workStart: '08:00',
+      workEnd: '17:00',
+      lateThreshold: 15,
       overtimeRate: 1.5,
       deductionRate: 0.5,
       baseSalary: 5000000,

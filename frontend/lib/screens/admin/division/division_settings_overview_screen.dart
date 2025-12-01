@@ -76,9 +76,9 @@ class _DivisionSettingsOverviewScreenState
           children: [
             const SizedBox(height: 4),
             Text(
-              'Jam Kerja: ${setting.workStartTime} - ${setting.workEndTime}',
+              'Jam Kerja: ${setting.workStart} - ${setting.workEnd}',
             ),
-            Text('Toleransi: ${setting.lateTolerance} menit'),
+            Text('Toleransi: ${setting.lateThreshold} menit'),
             Text('Rate Lembur: ${setting.overtimeRate}x'),
           ],
         ),

@@ -49,9 +49,9 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
   }
 
   void _initializeControllers() {
-    _controllers['workStartTime'] = TextEditingController();
-    _controllers['workEndTime'] = TextEditingController();
-    _controllers['lateTolerance'] = TextEditingController();
+    _controllers['workStart'] = TextEditingController();
+    _controllers['workEnd'] = TextEditingController();
+    _controllers['lateThreshold'] = TextEditingController();
     _controllers['overtimeRate'] = TextEditingController();
     _controllers['deductionRate'] = TextEditingController();
     _controllers['baseSalary'] = TextEditingController();
@@ -61,9 +61,9 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
   void _updateControllers() {
     final source =
         _setting ?? DivisionSettingData.getDefaultSetting(widget.division);
-    _controllers['workStartTime']!.text = source.workStartTime;
-    _controllers['workEndTime']!.text = source.workEndTime;
-    _controllers['lateTolerance']!.text = (source.lateTolerance ?? 0)
+    _controllers['workStart']!.text = source.workStart;
+    _controllers['workEnd']!.text = source.workEnd;
+    _controllers['lateThreshold']!.text = (source.lateThreshold ?? 0)
         .toString();
     _controllers['overtimeRate']!.text = (source.overtimeRate ?? 0.0)
         .toString();
@@ -134,8 +134,8 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
     });
 
     try {
-      final lateTolerance =
-          int.tryParse(_controllers['lateTolerance']!.text) ?? 0;
+      final lateThreshold =
+          int.tryParse(_controllers['lateThreshold']!.text) ?? 0;
       final overtimeRate =
           double.tryParse(_controllers['overtimeRate']!.text) ?? 0.0;
       final deductionRate =
@@ -150,9 +150,9 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
 
       final newSetting = DivisionSetting(
         division: widget.division,
-        workStartTime: _controllers['workStartTime']!.text,
-        workEndTime: _controllers['workEndTime']!.text,
-        lateTolerance: lateTolerance,
+        workStart: _controllers['workStart']!.text,
+        workEnd: _controllers['workEnd']!.text,
+        lateThreshold: lateThreshold,
         overtimeRate: overtimeRate,
         deductionRate: deductionRate,
         baseSalary: baseSalary,
@@ -190,6 +190,7 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
         _isLoading = false;
       });
 
+          print(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menyimpan pengaturan: $e'),
@@ -388,7 +389,7 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
               Expanded(
                 child: _buildTimeField(
                   'Jam Masuk',
-                  'workStartTime',
+                  'workStart',
                   Icons.access_time,
                 ),
               ),
@@ -396,7 +397,7 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
               Expanded(
                 child: _buildTimeField(
                   'Jam Pulang',
-                  'workEndTime',
+                  'workEnd',
                   Icons.access_time,
                 ),
               ),
@@ -405,9 +406,9 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
         } else {
           return Column(
             children: [
-              _buildTimeField('Jam Masuk', 'workStartTime', Icons.access_time),
+              _buildTimeField('Jam Masuk', 'workStart', Icons.access_time),
               SizedBox(height: isCompact ? 10 : 16),
-              _buildTimeField('Jam Pulang', 'workEndTime', Icons.access_time),
+              _buildTimeField('Jam Pulang', 'workEnd', Icons.access_time),
             ],
           );
         }
@@ -425,7 +426,7 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
               Expanded(
                 child: _buildNumberField(
                   'Toleransi Keterlambatan (menit)',
-                  'lateTolerance',
+                  'lateThreshold',
                   Icons.timer,
                 ),
               ),
@@ -452,7 +453,7 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
             children: [
               _buildNumberField(
                 'Toleransi Keterlambatan (menit)',
-                'lateTolerance',
+                'lateThreshold',
                 Icons.timer,
               ),
               SizedBox(height: isCompact ? 8 : 12),
@@ -651,11 +652,11 @@ class _DivisionSettingScreenState extends State<DivisionSettingScreen>
             children: [
               _buildInfoChip(
                 'Jam Kerja',
-                '${_setting?.workStartTime} - ${_setting?.workEndTime}',
+                '${_setting?.workStart} - ${_setting?.workEnd}',
               ),
               _buildInfoChip(
                 'Toleransi Keterlambatan',
-                '${_setting?.lateTolerance ?? 0} menit',
+                '${_setting?.lateThreshold ?? 0} menit',
               ),
               _buildInfoChip('Rate Lembur', '${_setting?.overtimeRate ?? 0}x'),
               _buildInfoChip(
