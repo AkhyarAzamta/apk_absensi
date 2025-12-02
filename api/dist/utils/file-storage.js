@@ -23,6 +23,10 @@ const createSelfiesDir = () => {
 };
 const saveImageToFile = (imageBuffer, userId, type) => {
     try {
+        if (!imageBuffer || !Buffer.isBuffer(imageBuffer)) {
+            console.error('Invalid image buffer:', imageBuffer);
+            throw new Error('Invalid image buffer provided');
+        }
         let uploadsDir;
         let filename;
         if (type === 'profile') {
@@ -34,13 +38,15 @@ const saveImageToFile = (imageBuffer, userId, type) => {
             filename = `selfie_${userId}_${type}_${(0, uuid_1.v4)()}.jpg`;
         }
         const filepath = path_1.default.join(uploadsDir, filename);
-        console.log('📁 File disimpan di:', filepath);
+        console.log('📁 Saving file to:', filepath);
+        console.log('📊 Buffer size:', imageBuffer.length, 'bytes');
         fs_1.default.writeFileSync(filepath, imageBuffer);
+        console.log('✅ File saved successfully');
         if (type === 'profile') {
-            return `/public/uploads/profiles/${filename}`;
+            return `/uploads/profiles/${filename}`;
         }
         else {
-            return `/public/uploads/selfies/${filename}`;
+            return `/uploads/selfies/${filename}`;
         }
     }
     catch (error) {

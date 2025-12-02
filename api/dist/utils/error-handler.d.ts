@@ -6,7 +6,8 @@ export declare enum ErrorType {
     FORBIDDEN = "FORBIDDEN",
     CONFLICT = "CONFLICT",
     BAD_REQUEST = "BAD_REQUEST",
-    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
+    INTERNAL_ERROR = "INTERNAL_ERROR"
 }
 export declare class AppError extends Error {
     type: ErrorType;

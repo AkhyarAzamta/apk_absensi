@@ -16,7 +16,7 @@ extension DivisionExtension on Division {
       case Division.APO:
         return 'APO';
       case Division.FRONT_DESK:
-        return 'FRONT DESK';
+        return 'FRONT_DESK';
       case Division.ONSITE:
         return 'ONSITE';
       default:

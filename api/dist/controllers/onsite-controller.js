@@ -6,6 +6,239 @@ const error_handler_1 = require("../utils/error-handler");
 const gps_1 = require("../utils/gps");
 const prisma = new client_1.PrismaClient();
 class OnsiteController {
+    async getOnsiteLocations(req, res) {
+        try {
+            const { division, isActive } = req.query;
+            const whereClause = {};
+            if (division) {
+                whereClause.division = division;
+            }
+            if (isActive !== undefined) {
+                whereClause.isActive = isActive === 'true';
+            }
+            const locations = await prisma.onsiteLocation.findMany({
+                where: whereClause,
+                orderBy: {
+                    name: 'asc'
+                }
+            });
+            res.json({
+                success: true,
+                data: locations,
+                count: locations.length
+            });
+        }
+        catch (error) {
+            console.error('Get onsite locations error:', error);
+            (0, error_handler_1.sendErrorResponse)(res, error);
+        }
+    }
+    async getOnsiteLocationById(req, res) {
+        try {
+            const { id } = req.params;
+            const location = await prisma.onsiteLocation.findUnique({
+                where: { id: parseInt(id) }
+            });
+            if (!location) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Lokasi onsite tidak ditemukan'
+                });
+                return;
+            }
+            res.json({
+                success: true,
+                data: location
+            });
+        }
+        catch (error) {
+            console.error('Get onsite location by ID error:', error);
+            (0, error_handler_1.sendErrorResponse)(res, error);
+        }
+    }
+    async createOnsiteLocation(req, res) {
+        try {
+            const { name, address, latitude, longitude, radius = 100, division, isActive = true } = req.body;
+            if (!name || !address || !latitude || !longitude || !division) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Nama, alamat, latitude, longitude, dan division diperlukan'
+                });
+                return;
+            }
+            if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+                res.status(400).json({
+                    success: false,
+                    message: 'Latitude dan longitude harus berupa angka'
+                });
+                return;
+            }
+            if (radius < 50 || radius > 5000) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Radius harus antara 50 - 5000 meter'
+                });
+                return;
+            }
+            const existingLocation = await prisma.onsiteLocation.findUnique({
+                where: { name }
+            });
+            if (existingLocation) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Nama lokasi sudah digunakan'
+                });
+                return;
+            }
+            const newLocation = await prisma.onsiteLocation.create({
+                data: {
+                    name,
+                    address,
+                    latitude: parseFloat(latitude.toString()),
+                    longitude: parseFloat(longitude.toString()),
+                    radius: parseInt(radius),
+                    division,
+                    isActive
+                }
+            });
+            res.status(201).json({
+                success: true,
+                message: 'Lokasi onsite berhasil dibuat',
+                data: newLocation
+            });
+        }
+        catch (error) {
+            console.error('Create onsite location error:', error);
+            (0, error_handler_1.sendErrorResponse)(res, error);
+        }
+    }
+    async updateOnsiteLocation(req, res) {
+        try {
+            const { id } = req.params;
+            const { name, address, latitude, longitude, radius, division, isActive } = req.body;
+            const existingLocation = await prisma.onsiteLocation.findUnique({
+                where: { id: parseInt(id) }
+            });
+            if (!existingLocation) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Lokasi onsite tidak ditemukan'
+                });
+                return;
+            }
+            if (name && name !== existingLocation.name) {
+                const nameExists = await prisma.onsiteLocation.findUnique({
+                    where: { name }
+                });
+                if (nameExists) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Nama lokasi sudah digunakan'
+                    });
+                    return;
+                }
+            }
+            if (latitude && typeof latitude !== 'number') {
+                res.status(400).json({
+                    success: false,
+                    message: 'Latitude harus berupa angka'
+                });
+                return;
+            }
+            if (longitude && typeof longitude !== 'number') {
+                res.status(400).json({
+                    success: false,
+                    message: 'Longitude harus berupa angka'
+                });
+                return;
+            }
+            if (radius && (radius < 50 || radius > 5000)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Radius harus antara 50 - 5000 meter'
+                });
+                return;
+            }
+            const updatedLocation = await prisma.onsiteLocation.update({
+                where: { id: parseInt(id) },
+                data: {
+                    ...(name && { name }),
+                    ...(address && { address }),
+                    ...(latitude && { latitude: parseFloat(latitude) }),
+                    ...(longitude && { longitude: parseFloat(longitude) }),
+                    ...(radius && { radius: parseInt(radius) }),
+                    ...(division && { division }),
+                    ...(isActive !== undefined && { isActive })
+                }
+            });
+            res.json({
+                success: true,
+                message: 'Lokasi onsite berhasil diupdate',
+                data: updatedLocation
+            });
+        }
+        catch (error) {
+            console.error('Update onsite location error:', error);
+            (0, error_handler_1.sendErrorResponse)(res, error);
+        }
+    }
+    async deleteOnsiteLocation(req, res) {
+        try {
+            const { id } = req.params;
+            const existingLocation = await prisma.onsiteLocation.findUnique({
+                where: { id: parseInt(id) }
+            });
+            if (!existingLocation) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Lokasi onsite tidak ditemukan'
+                });
+                return;
+            }
+            await prisma.onsiteLocation.update({
+                where: { id: parseInt(id) },
+                data: { isActive: false }
+            });
+            res.json({
+                success: true,
+                message: 'Lokasi onsite berhasil dinonaktifkan'
+            });
+        }
+        catch (error) {
+            console.error('Delete onsite location error:', error);
+            (0, error_handler_1.sendErrorResponse)(res, error);
+        }
+    }
+    async toggleLocationStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const existingLocation = await prisma.onsiteLocation.findUnique({
+                where: { id: parseInt(id) }
+            });
+            if (!existingLocation) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Lokasi onsite tidak ditemukan'
+                });
+                return;
+            }
+            const updatedLocation = await prisma.onsiteLocation.update({
+                where: { id: parseInt(id) },
+                data: {
+                    isActive: !existingLocation.isActive
+                }
+            });
+            res.json({
+                success: true,
+                message: `Lokasi berhasil ${updatedLocation.isActive ? 'diaktifkan' : 'dinonaktifkan'}`,
+                data: updatedLocation
+            });
+        }
+        catch (error) {
+            console.error('Toggle location status error:', error);
+            (0, error_handler_1.sendErrorResponse)(res, error);
+        }
+    }
     async validateGPSCheckIn(req, res) {
         try {
             const { userId, latitude, longitude } = req.body;

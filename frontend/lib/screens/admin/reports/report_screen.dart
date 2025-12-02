@@ -189,26 +189,34 @@ class _ReportScreenState extends State<ReportScreen>
 
                   // Division
                   _buildFilterField(
-                    'Divisi',
-                    DropdownButton<String>(
-                      value: _selectedDivision,
-                      isExpanded: true,
-                      items: [
-                        const DropdownMenuItem(
-                          value: '',
-                          child: Text('Semua Divisi'),
-                        ),
-                        ...ReportData.divisions.map((division) {
-                          return DropdownMenuItem(
-                            value: division,
-                            child: Text(ReportData.getDivisionLabel(division)),
-                          );
-                        }),
-                      ],
-                      onChanged: (value) {
-                        setDialogState(() {
-                          _selectedDivision = value!;
-                        });
+                    'Rentang Tanggal',
+                    ListTile(
+                      title: Text(
+                        (_startDate != null && _endDate != null)
+                            ? "${DateFormat('dd/MM/yyyy').format(_startDate!)} → ${DateFormat('dd/MM/yyyy').format(_endDate!)}"
+                            : 'Pilih Rentang Tanggal',
+                      ),
+                      trailing: const Icon(Icons.date_range),
+                      onTap: () async {
+                        final picked = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                          initialDateRange:
+                              (_startDate != null && _endDate != null)
+                              ? DateTimeRange(
+                                  start: _startDate!,
+                                  end: _endDate!,
+                                )
+                              : null,
+                        );
+
+                        if (picked != null) {
+                          setDialogState(() {
+                            _startDate = picked.start;
+                            _endDate = picked.end;
+                          });
+                        }
                       },
                     ),
                   ),
@@ -369,6 +377,12 @@ class _ReportScreenState extends State<ReportScreen>
 
   void _exportReport(String format) async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      String filePath;
+
       if (_tabController.index == 0) {
         final filter = ReportFilter(
           type: _getReportTypeApiValue(),
@@ -378,7 +392,7 @@ class _ReportScreenState extends State<ReportScreen>
           jabatan: _selectedJabatan.isEmpty ? null : _selectedJabatan,
         );
 
-        await ReportService.exportAttendanceReport(
+        filePath = await ReportService.exportAttendanceReport(
           filter: filter,
           format: format,
         );
@@ -390,23 +404,38 @@ class _ReportScreenState extends State<ReportScreen>
           division: _selectedDivision.isEmpty ? null : _selectedDivision,
         );
 
-        await ReportService.exportSalaryReport(filter: filter, format: format);
+        filePath = await ReportService.exportSalaryReport(
+          filter: filter,
+          format: format,
+        );
       }
 
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Laporan berhasil diexport ke $format'),
+            content: Text(
+              'Laporan berhasil diexport ke $format\nPath: $filePath',
+            ),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal export laporan: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -468,200 +497,86 @@ class _ReportScreenState extends State<ReportScreen>
         // Summary Cards
         _buildSummaryCards(summary),
 
-        // Data Table dengan scroll horizontal yang baik
-        Expanded(child: _buildAttendanceTable()),
+        // Data Table
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: _buildAttendanceTable(),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildAttendanceTable() {
-    final double tableWidth = 1360; // total lebar tabel - disesuaikan
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: tableWidth,
-        child: Column(
-          children: [
-            _buildTableHeader(),
-
-            // Body table
-            Expanded(
-              child: ListView.builder(
-                itemCount: _attendanceReports.length,
-                itemBuilder: (context, index) {
-                  final report = _attendanceReports[index];
-                  final decision = ReportService.calculateSalaryDecisionTree(
-                    report,
-                  );
-
-                  return _buildAttendanceTableRow(report, decision, index);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      color: Colors.grey[200],
-      child: Row(
-        children: [
-          SizedBox(width: 200, child: Text('Nama', style: _headerTextStyle())),
-          SizedBox(
-            width: 150,
-            child: Text('Jabatan', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 120,
-            child: Text('Tanggal', style: _headerTextStyle()),
-          ),
-          SizedBox(width: 100, child: Text('Masuk', style: _headerTextStyle())),
-          SizedBox(
-            width: 100,
-            child: Text('Pulang', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 120,
-            child: Text('Terlambat', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 100,
-            child: Text('Lembur', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 120,
-            child: Text('Potongan', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 100,
-            child: Text('Total Gaji', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 100,
-            child: Text('Lokasi', style: _headerTextStyle()),
-          ),
+      child: DataTable(
+        columnSpacing: 20,
+        horizontalMargin: 12,
+        columns: const [
+          DataColumn(label: Text('Nama')),
+          DataColumn(label: Text('Jabatan')),
+          DataColumn(label: Text('Tanggal')),
+          DataColumn(label: Text('Masuk')),
+          DataColumn(label: Text('Pulang')),
+          DataColumn(label: Text('Terlambat')),
+          DataColumn(label: Text('Lembur')),
+          DataColumn(label: Text('Potongan')),
+          DataColumn(label: Text('Total Gaji')),
+          DataColumn(label: Text('Lokasi')),
         ],
-      ),
-    );
-  }
+        rows: _attendanceReports.map((report) {
+          final decision = ReportService.calculateSalaryDecisionTree(report);
 
-  Widget _buildAttendanceTableRow(
-    AttendanceReport report,
-    Map<String, dynamic> decision,
-    int index,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      elevation: 1,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        color: index.isEven ? Colors.grey[50] : Colors.white,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 200,
-              child: Text(
-                report.nama,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
+          return DataRow(
+            cells: [
+              DataCell(
+                SizedBox(
+                  width: 150,
+                  child: Text(report.nama, overflow: TextOverflow.ellipsis),
+                ),
               ),
-            ),
-            SizedBox(
-              width: 150,
-              child: Text(
-                report.jabatan,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
+              DataCell(
+                SizedBox(
+                  width: 120,
+                  child: Text(report.jabatan, overflow: TextOverflow.ellipsis),
+                ),
               ),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                report.tanggal,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
+              DataCell(Text(report.tanggal)),
+              DataCell(Text(report.jamMasuk)),
+              DataCell(Text(report.jamPulang)),
+              DataCell(Text(ReportData.formatMinutes(report.terlambat))),
+              DataCell(Text('${report.lembur.toStringAsFixed(1)} jam')),
+              DataCell(
+                Text(
+                  ReportData.formatCurrency(report.potongan),
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
-            ),
-            SizedBox(
-              width: 100,
-              child: Text(
-                report.jamMasuk,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 100,
-              child: Text(
-                report.jamPulang,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                ReportData.formatMinutes(report.terlambat),
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 100,
-              child: Text(
-                '${report.lembur.toStringAsFixed(1)} jam',
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                ReportData.formatCurrency(report.potongan),
-                style: _cellTextStyle(color: Colors.red),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 150,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Tooltip(
-                  triggerMode: TooltipTriggerMode.tap,
-                  waitDuration: const Duration(milliseconds: 300),
-                  showDuration: const Duration(seconds: 3),
+              DataCell(
+                Tooltip(
                   message:
-                      'Kategori: ${decision['kategori']}\nBonus: ${ReportData.formatCurrency(decision['bonus'])}',
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      ReportData.formatCurrency(report.totalGaji),
-                      style: _cellTextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      'Kategori: ${decision['kategori']}\n'
+                      'Bonus: ${ReportData.formatCurrency(decision['bonus'])}',
+                  child: Text(
+                    ReportData.formatCurrency(report.totalGaji),
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-            ),
-            SizedBox(
-              width: 100,
-              child: Text(
-                report.lokasi,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
+              DataCell(
+                SizedBox(
+                  width: 100,
+                  child: Text(report.lokasi, overflow: TextOverflow.ellipsis),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -721,162 +636,74 @@ class _ReportScreenState extends State<ReportScreen>
           ),
         ),
 
-        // Data Table dengan struktur yang sama seperti absensi
-        Expanded(child: _buildSalaryTable()),
+        // Data Table
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: _buildSalaryTable(),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildSalaryTable() {
-    final double tableWidth = 1010; // total lebar untuk 7 kolom
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: tableWidth,
-        child: Column(
-          children: [
-            _buildSalaryTableHeader(),
-
-            // Body table
-            Expanded(
-              child: ListView.builder(
-                itemCount: _salaryReports.length,
-                itemBuilder: (context, index) {
-                  final report = _salaryReports[index];
-                  return _buildSalaryTableRow(report, index);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSalaryTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      color: Colors.grey[200],
-      child: Row(
-        children: [
-          SizedBox(width: 200, child: Text('Nama', style: _headerTextStyle())),
-          SizedBox(
-            width: 150,
-            child: Text('Jabatan', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 120,
-            child: Text('Divisi', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 150,
-            child: Text('Gaji Pokok', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 120,
-            child: Text('Lembur', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 120,
-            child: Text('Potongan', style: _headerTextStyle()),
-          ),
-          SizedBox(
-            width: 100,
-            child: Text('Total Gaji', style: _headerTextStyle()),
-          ),
+      child: DataTable(
+        columnSpacing: 20,
+        horizontalMargin: 12,
+        columns: const [
+          DataColumn(label: Text('Nama')),
+          DataColumn(label: Text('Jabatan')),
+          DataColumn(label: Text('Divisi')),
+          DataColumn(label: Text('Gaji Pokok')),
+          DataColumn(label: Text('Lembur')),
+          DataColumn(label: Text('Potongan')),
+          DataColumn(label: Text('Total Gaji')),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSalaryTableRow(SalaryReport report, int index) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      elevation: 1,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        color: index.isEven ? Colors.grey[50] : Colors.white,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 200,
-              child: Text(
-                report.nama,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 150,
-              child: Text(
-                report.jabatan,
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                ReportData.getDivisionLabel(report.divisi),
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 150,
-              child: Text(
-                ReportData.formatCurrency(report.gajiPokok),
-                style: _cellTextStyle(),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                ReportData.formatCurrency(report.lembur),
-                style: _cellTextStyle(color: Colors.orange),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                ReportData.formatCurrency(report.potongan),
-                style: _cellTextStyle(color: Colors.red),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(
-              width: 100,
-              child: Text(
-                ReportData.formatCurrency(report.totalGaji),
-                style: _cellTextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
+        rows: _salaryReports.map((report) {
+          return DataRow(
+            cells: [
+              DataCell(
+                SizedBox(
+                  width: 150,
+                  child: Text(report.nama, overflow: TextOverflow.ellipsis),
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
-        ),
+              DataCell(
+                SizedBox(
+                  width: 120,
+                  child: Text(report.jabatan, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+              DataCell(Text(ReportData.getDivisionLabel(report.divisi))),
+              DataCell(Text(ReportData.formatCurrency(report.gajiPokok))),
+              DataCell(
+                Text(
+                  ReportData.formatCurrency(report.lembur),
+                  style: const TextStyle(color: Colors.orange),
+                ),
+              ),
+              DataCell(
+                Text(
+                  ReportData.formatCurrency(report.potongan),
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+              DataCell(
+                Text(
+                  ReportData.formatCurrency(report.totalGaji),
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
-    );
-  }
-
-  TextStyle _headerTextStyle() {
-    return const TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 14,
-      color: Colors.black87,
-    );
-  }
-
-  TextStyle _cellTextStyle({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontSize: 12,
-      color: color ?? Colors.black87,
-      fontWeight: fontWeight ?? FontWeight.normal,
     );
   }
 

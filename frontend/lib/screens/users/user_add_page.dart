@@ -31,7 +31,7 @@ class _UserAddPageState extends State<UserAddPage> {
   final List<Map<String, dynamic>> divisionList = [
     {"id": 1, "name": "FINANCE"},
     {"id": 2, "name": "APO"},
-    {"id": 3, "name": "FRONT DESK"},
+    {"id": 3, "name": "FRONT_DESK"},
     {"id": 4, "name": "ONSITE"},
   ];
 

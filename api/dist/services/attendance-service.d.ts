@@ -11,6 +11,11 @@ export declare class AttendanceService {
         location: string;
         selfie: Buffer;
     }): Promise<Attendance>;
+    validateGPSLocation(userId: number, latitude: number, longitude: number): Promise<{
+        isValid: boolean;
+        location?: any;
+        message: string;
+    }>;
     getAttendanceHistory(userId: number, startDate: Date, endDate: Date): Promise<Attendance[]>;
     getAttendanceSummary(userId: number, month: number, year: number): Promise<{
         totalPresent: number;

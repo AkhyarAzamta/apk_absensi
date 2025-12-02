@@ -11,16 +11,7 @@ const uploadPath = path_1.default.join(__dirname, '../../public/uploads/profiles
 if (!fs_1.default.existsSync(uploadPath)) {
     fs_1.default.mkdirSync(uploadPath, { recursive: true });
 }
-const storage = multer_1.default.diskStorage({
-    destination: function (_req, _file, cb) {
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        const ext = path_1.default.extname(file.originalname);
-        const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `profile_${req.params.id || 'new'}_${unique}${ext}`);
-    },
-});
+const storage = multer_1.default.memoryStorage();
 const fileFilter = (_req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);

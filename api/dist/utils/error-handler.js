@@ -11,6 +11,7 @@ var ErrorType;
     ErrorType["CONFLICT"] = "CONFLICT";
     ErrorType["BAD_REQUEST"] = "BAD_REQUEST";
     ErrorType["INTERNAL_SERVER_ERROR"] = "INTERNAL_SERVER_ERROR";
+    ErrorType["INTERNAL_ERROR"] = "INTERNAL_ERROR";
 })(ErrorType || (exports.ErrorType = ErrorType = {}));
 class AppError extends Error {
     constructor(type, message, details) {
